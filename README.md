@@ -59,9 +59,6 @@ python ezswitch.py
 - Select "Moonshot.ai" radio button
 - Enter your Moonshot.ai API key
 - Click "Apply Configuration"
-- **📝 Note**: Moonshot.ai uses the Kimi model family (kimi-v1, kimi-v1.5, kimi-v1.5-long) which are compatible with Claude Code
-- Ensure your Moonshot.ai account has API access enabled
-- Verify your API key has sufficient credits for usage
 
 #### **Custom Configuration**
 - Select "Custom" radio button
@@ -85,14 +82,6 @@ The application manages the following Windows environment variables:
 **Moonshot.ai**:
 - `ANTHROPIC_AUTH_TOKEN`: Your Moonshot.ai API key
 - `ANTHROPIC_BASE_URL`: `https://api.moonshot.ai/anthropic`
-- **🔍 Endpoint Verification**: Test your Moonshot.ai endpoint with:
-  ```bash
-  curl -H "Authorization: Bearer YOUR_API_KEY" https://api.moonshot.ai/anthropic/v1/models
-  ```
-- **⚡ Rate Limits**: Moonshot.ai has different rate limits for free vs paid accounts
-- **🌐 Alternative Endpoints**: If the main endpoint is unavailable, try:
-  - Primary: `https://api.moonshot.ai/anthropic`
-  - Alternative: `https://api.moonshot.cn/anthropic`
 
 **Claude API**:
 - `ANTHROPIC_AUTH_TOKEN`: Your Claude API key

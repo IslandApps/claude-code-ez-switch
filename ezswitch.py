@@ -11,7 +11,7 @@ class ClaudeConfigSwitcher:
     def __init__(self, root):
         self.root = root
         self.root.title("Claude Code EZ Switch")
-        self.root.geometry("600x760")
+        self.root.geometry("600x900")
         self.root.resizable(False, False)
         
         # Path for storing API keys persistently
@@ -159,6 +159,18 @@ class ClaudeConfigSwitcher:
                                            activeforeground=self.fg_color,
                                            font=('Segoe UI', 9))
         show_password_check.pack(anchor=tk.W, pady=(10, 0))
+
+        # Show Environment Variables Checkbutton
+        self.show_env_vars_var = tk.BooleanVar()
+        show_env_vars_check = tk.Checkbutton(content_frame, text="Show Environment Variables",
+                                           variable=self.show_env_vars_var,
+                                           command=self.toggle_env_vars_visibility,
+                                           bg=self.bg_color, fg=self.fg_color,
+                                           selectcolor=self.entry_bg,
+                                           activebackground=self.bg_color,
+                                           activeforeground=self.fg_color,
+                                           font=('Segoe UI', 9))
+        show_env_vars_check.pack(anchor=tk.W, pady=(5, 0))
         
         # Buttons Frame using Grid for better layout
         button_container = tk.Frame(content_frame, bg=self.bg_color)
@@ -224,79 +236,134 @@ class ClaudeConfigSwitcher:
     
     def create_zai_frame(self):
         """Create Z.ai configuration frame"""
-        self.zai_frame = tk.LabelFrame(self.dynamic_config_container, text="", bg=self.entry_bg, 
+        self.zai_frame = tk.LabelFrame(self.dynamic_config_container, text="", bg=self.entry_bg,
                                  fg=self.fg_color, relief=tk.FLAT, bd=2)
-        
+
         zai_key_label = ttk.Label(self.zai_frame, text="Z.ai API Key:")
         zai_key_label.pack(anchor=tk.W, padx=15, pady=(10, 2))
-        
+
         self.zai_key_entry = tk.Entry(self.zai_frame, bg=self.entry_bg, fg=self.fg_color,
                                       insertbackground=self.fg_color, relief=tk.FLAT,
                                       font=('Segoe UI', 10), bd=0, show="*")
         self.zai_key_entry.pack(fill=tk.X, padx=15, pady=(0, 2), ipady=8)
-        
+
         # Add border to entry
         entry_border = tk.Frame(self.zai_frame, bg=self.accent_color, height=2)
         entry_border.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Environment variables display (hidden by default)
+        self.zai_env_frame = tk.Frame(self.zai_frame, bg=self.entry_bg)
+        self.zai_env_vars_text = tk.Text(self.zai_env_frame, bg=self.entry_bg, fg="#cccccc",
+                                         font=('Consolas', 8), height=12, wrap=tk.WORD,
+                                         relief=tk.FLAT, bd=0, state=tk.DISABLED)
+        self.zai_env_vars_text.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Populate environment variables text
+        zai_env_vars = [
+            "ANTHROPIC_AUTH_TOKEN=<your-zai-api-key>",
+            "ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL=GLM-4.6",
+            "ANTHROPIC_DEFAULT_SONNET_MODEL=GLM-4.6",
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL=GLM-4.5-Air"
+        ]
+        self.zai_env_vars_text.configure(state=tk.NORMAL)
+        self.zai_env_vars_text.insert('1.0', '\n'.join(zai_env_vars))
+        self.zai_env_vars_text.configure(state=tk.DISABLED)
     
     def create_claude_frame(self):
         """Create Claude configuration frame"""
-        self.claude_frame = tk.LabelFrame(self.dynamic_config_container, text="", bg=self.entry_bg, 
+        self.claude_frame = tk.LabelFrame(self.dynamic_config_container, text="", bg=self.entry_bg,
                                     fg=self.fg_color, relief=tk.FLAT, bd=2)
-        
+
         self.claude_mode_var = tk.StringVar(value="subscription")
-        
-        subscription_radio = ttk.Radiobutton(self.claude_frame, text="Use Claude Subscription (Pro/Team/Enterprise)", 
+
+        subscription_radio = ttk.Radiobutton(self.claude_frame, text="Use Claude Subscription (Pro/Team/Enterprise)",
                                            variable=self.claude_mode_var, value="subscription",
                                            command=self.on_claude_mode_change)
         subscription_radio.pack(anchor=tk.W, padx=15, pady=(10, 5))
-        
-        api_radio = ttk.Radiobutton(self.claude_frame, text="Use Claude API Key", 
+
+        api_radio = ttk.Radiobutton(self.claude_frame, text="Use Claude API Key",
                                    variable=self.claude_mode_var, value="api",
                                    command=self.on_claude_mode_change)
         api_radio.pack(anchor=tk.W, padx=15, pady=(0, 5))
-        
+
         claude_key_label = ttk.Label(self.claude_frame, text="Claude API Key:")
         claude_key_label.pack(anchor=tk.W, padx=15, pady=(5, 2))
-        
+
         self.claude_key_entry = tk.Entry(self.claude_frame, bg=self.entry_bg, fg=self.fg_color,
                                          insertbackground=self.fg_color, relief=tk.FLAT,
                                          font=('Segoe UI', 10), bd=0, show="*", state=tk.DISABLED,
                                          disabledbackground=self.entry_bg, disabledforeground="#888888")
         self.claude_key_entry.pack(fill=tk.X, padx=15, pady=(0, 2), ipady=8)
-        
+
         # Add border to entry
         claude_entry_border = tk.Frame(self.claude_frame, bg=self.accent_color, height=2)
         claude_entry_border.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Environment variables display (hidden by default)
+        self.claude_env_frame = tk.Frame(self.claude_frame, bg=self.entry_bg)
+        self.claude_env_vars_text = tk.Text(self.claude_env_frame, bg=self.entry_bg, fg="#cccccc",
+                                           font=('Consolas', 8), height=4, wrap=tk.WORD,
+                                           relief=tk.FLAT, bd=0, state=tk.DISABLED)
+        self.claude_env_vars_text.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Populate environment variables text
+        subscription_env_vars = [
+            "ANTHROPIC_AUTH_TOKEN=<removed>",
+            "ANTHROPIC_BASE_URL=<removed>",
+            "",
+            "(Note: No environment variables are used with Claude Subscription)"
+        ]
+        self.claude_env_vars_text.configure(state=tk.NORMAL)
+        self.claude_env_vars_text.insert('1.0', '\n'.join(subscription_env_vars))
+        self.claude_env_vars_text.configure(state=tk.DISABLED)
     
     def create_custom_frame(self):
         """Create Custom configuration frame"""
-        self.custom_frame = tk.LabelFrame(self.dynamic_config_container, text="", bg=self.entry_bg, 
+        self.custom_frame = tk.LabelFrame(self.dynamic_config_container, text="", bg=self.entry_bg,
                                     fg=self.fg_color, relief=tk.FLAT, bd=2)
-        
+
         custom_url_label = ttk.Label(self.custom_frame, text="Custom Base URL:")
         custom_url_label.pack(anchor=tk.W, padx=15, pady=(10, 2))
-        
+
         self.custom_url_entry = tk.Entry(self.custom_frame, bg=self.entry_bg, fg=self.fg_color,
                                          insertbackground=self.fg_color, relief=tk.FLAT,
                                          font=('Segoe UI', 10), bd=0)
         self.custom_url_entry.pack(fill=tk.X, padx=15, pady=(0, 2), ipady=8)
-        
+
         # Add border to entry
         custom_url_border = tk.Frame(self.custom_frame, bg=self.accent_color, height=2)
         custom_url_border.pack(fill=tk.X, padx=15, pady=(0, 5))
-        
+
         custom_key_label = ttk.Label(self.custom_frame, text="Custom API Key:")
         custom_key_label.pack(anchor=tk.W, padx=15, pady=(5, 2))
-        
+
         self.custom_key_entry = tk.Entry(self.custom_frame, bg=self.entry_bg, fg=self.fg_color,
                                          insertbackground=self.fg_color, relief=tk.FLAT,
                                          font=('Segoe UI', 10), bd=0, show="*")
         self.custom_key_entry.pack(fill=tk.X, padx=15, pady=(0, 2), ipady=8)
-        
+
         # Add border to entry
         custom_key_border = tk.Frame(self.custom_frame, bg=self.accent_color, height=2)
         custom_key_border.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Environment variables display (hidden by default)
+        self.custom_env_frame = tk.Frame(self.custom_frame, bg=self.entry_bg)
+        self.custom_env_vars_text = tk.Text(self.custom_env_frame, bg=self.entry_bg, fg="#cccccc",
+                                           font=('Consolas', 8), height=4, wrap=tk.WORD,
+                                           relief=tk.FLAT, bd=0, state=tk.DISABLED)
+        self.custom_env_vars_text.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Populate environment variables text
+        custom_env_vars = [
+            "ANTHROPIC_AUTH_TOKEN=<your-custom-api-key>",
+            "ANTHROPIC_BASE_URL=<your-custom-base-url>",
+            "",
+            "(Note: Only basic auth token and base URL are set)"
+        ]
+        self.custom_env_vars_text.configure(state=tk.NORMAL)
+        self.custom_env_vars_text.insert('1.0', '\n'.join(custom_env_vars))
+        self.custom_env_vars_text.configure(state=tk.DISABLED)
 
         # Bind events to save API keys when they change
         self.zai_key_entry.bind('<KeyRelease>', lambda e: self.save_api_keys())
@@ -321,6 +388,24 @@ class ClaudeConfigSwitcher:
         # Add border to entry
         moonshot_key_border = tk.Frame(self.moonshot_frame, bg=self.accent_color, height=2)
         moonshot_key_border.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Environment variables display (hidden by default)
+        self.moonshot_env_frame = tk.Frame(self.moonshot_frame, bg=self.entry_bg)
+        self.moonshot_env_vars_text = tk.Text(self.moonshot_env_frame, bg=self.entry_bg, fg="#cccccc",
+                                             font=('Consolas', 8), height=4, wrap=tk.WORD,
+                                             relief=tk.FLAT, bd=0, state=tk.DISABLED)
+        self.moonshot_env_vars_text.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Populate environment variables text
+        moonshot_env_vars = [
+            "ANTHROPIC_AUTH_TOKEN=<your-moonshot-api-key>",
+            "ANTHROPIC_BASE_URL=https://api.moonshot.ai/anthropic",
+            "",
+            "(Note: Moonshot.ai API endpoint with your API key)"
+        ]
+        self.moonshot_env_vars_text.configure(state=tk.NORMAL)
+        self.moonshot_env_vars_text.insert('1.0', '\n'.join(moonshot_env_vars))
+        self.moonshot_env_vars_text.configure(state=tk.DISABLED)
     
     def load_existing_api_keys(self):
         """Load existing API keys from environment variables and pre-fill them"""
@@ -499,8 +584,30 @@ class ClaudeConfigSwitcher:
         """Handle Claude mode radio button change"""
         if self.claude_mode_var.get() == "api":
             self.claude_key_entry.configure(state=tk.NORMAL)
+            # Update environment variables display for API mode
+            api_env_vars = [
+                "ANTHROPIC_AUTH_TOKEN=<your-claude-api-key>",
+                "ANTHROPIC_BASE_URL=<removed>",
+                "",
+                "(Note: Only API key is set, base URL is removed)"
+            ]
+            self.claude_env_vars_text.configure(state=tk.NORMAL)
+            self.claude_env_vars_text.delete('1.0', tk.END)
+            self.claude_env_vars_text.insert('1.0', '\n'.join(api_env_vars))
+            self.claude_env_vars_text.configure(state=tk.DISABLED)
         else:
             self.claude_key_entry.configure(state=tk.DISABLED)
+            # Update environment variables display for subscription mode
+            subscription_env_vars = [
+                "ANTHROPIC_AUTH_TOKEN=<removed>",
+                "ANTHROPIC_BASE_URL=<removed>",
+                "",
+                "(Note: No environment variables are used with Claude Subscription)"
+            ]
+            self.claude_env_vars_text.configure(state=tk.NORMAL)
+            self.claude_env_vars_text.delete('1.0', tk.END)
+            self.claude_env_vars_text.insert('1.0', '\n'.join(subscription_env_vars))
+            self.claude_env_vars_text.configure(state=tk.DISABLED)
     
     def toggle_password_visibility(self):
         """Toggle password visibility in entry fields"""
@@ -514,6 +621,21 @@ class ClaudeConfigSwitcher:
             self.custom_key_entry.configure(show="*")
             self.claude_key_entry.configure(show="*")
             self.moonshot_key_entry.configure(show="*")
+
+    def toggle_env_vars_visibility(self):
+        """Toggle environment variables display visibility"""
+        if self.show_env_vars_var.get():
+            # Show all environment variable frames
+            self.zai_env_frame.pack(fill=tk.X, pady=(0, 10))
+            self.claude_env_frame.pack(fill=tk.X, pady=(0, 10))
+            self.custom_env_frame.pack(fill=tk.X, pady=(0, 10))
+            self.moonshot_env_frame.pack(fill=tk.X, pady=(0, 10))
+        else:
+            # Hide all environment variable frames
+            self.zai_env_frame.pack_forget()
+            self.claude_env_frame.pack_forget()
+            self.custom_env_frame.pack_forget()
+            self.moonshot_env_frame.pack_forget()
     
     def close_application(self):
         """Properly close the application"""
@@ -607,22 +729,9 @@ class ClaudeConfigSwitcher:
                 commands = [
                     f"[System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', '{zai_key}', 'User')",
                     f"[System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/anthropic', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('API_TIMEOUT_MS', '3000000', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_MODEL', 'glm-4.6', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_OPUS_MODEL', 'glm-4.6', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_SONNET_MODEL', 'glm-4.6', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'glm-4.6', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('ENABLE_THINKING', 'true', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('ENABLE_STREAMING', 'true', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_SAFE_MODE', 'false', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_TEMPERATURE', '0.2', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_STREAM', 'true', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', '1', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('CLAUDE_CODE_DISABLE_ANALYTICS', '1', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('DISABLE_TELEMETRY', '1', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('DISABLE_ERROR_REPORTING', '1', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('MAX_THINKING_TOKENS', '4096', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR', 'true', 'User')"
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_OPUS_MODEL', 'GLM-4.6', 'Machine')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_SONNET_MODEL', 'GLM-4.6', 'Machine')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'GLM-4.5-Air', 'Machine')"
                 ]
                 
                 for cmd in commands:

@@ -1,14 +1,19 @@
 # Claude Code EZ Switch
 
+<<<<<<< HEAD
 A Windows desktop application written in Python, that allows you to easily switch between different Claude Code API configurations, including Z.ai, Anthropic Claude, Moonshot.ai, and custom endpoints.
 
+=======
+A Windows desktop application to easily switch between Claude Code API configurations (Z.ai, Anthropic, custom endpoints).
+>>>>>>> d8b921b4a1b4aa510c04d8f921c3649a6e388ac2
 
 ![Claude Code EZ Switch](https://img.shields.io/badge/Platform-Windows-blue?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 ![Python](https://img.shields.io/badge/Python-3.7%2B-yellow?style=flat-square)
 
-## 🚀 Features
+## Features
 
+<<<<<<< HEAD
 - **Easy Configuration Switching**: Seamlessly switch between Z.ai, Anthropic Claude, Moonshot.ai, and custom API endpoints
 - **Enhanced Moonshot.ai Compatibility**: Full support for Kimi model family with endpoint verification
 - **Persistent Storage**: Securely saves your API keys locally for convenience
@@ -17,16 +22,22 @@ A Windows desktop application written in Python, that allows you to easily switc
 - **Password Visibility Toggle**: Show/hide API keys for security
 - **Automatic Detection**: Detects and pre-fills existing environment variables
 - **Threading Support**: Non-blocking UI with loading indicators
+=======
+- Switch between Z.ai, Anthropic Claude, and custom API endpoints  
+- Securely saves API keys locally  
+- Shows your current configuration  
+- Auto-detects existing environment variables  
+>>>>>>> d8b921b4a1b4aa510c04d8f921c3649a6e388ac2
 
-## 🔒 Security Features
+## Requirements
 
-- **Local Storage**: API keys are stored locally in `~/.claude_ez_switch/config.json`
-- **Password Masking**: API keys are hidden by default with asterisks
-- **Secure Environment Variables**: Uses Windows user-level environment variables
-- **No Cloud Storage**: No data is sent to external servers
+- Python 3.7+  
+- Windows 10 or above  
+- Claude Code CLI  
 
-## 🎨 Interface Features
+## Installation
 
+<<<<<<< HEAD
 - **Dark Theme**: Easy on the eyes with professional dark color scheme
 - **Status Display**: Real-time configuration status with masked API keys
 - **Loading Indicators**: Visual feedback during configuration changes
@@ -182,31 +193,38 @@ The application manages the following Windows user environment variables that ar
 ## 📝 Development
 
 ### Project Structure:
+=======
+>>>>>>> d8b921b4a1b4aa510c04d8f921c3649a6e388ac2
 ```
-claude-code-ez-switch/
-├── ezswitch.py              # Main application file
-├── README.md                # This documentation
-└── .git/                    # Git repository
+git clone https://github.com/techcow2/claude-code-ez-switch.git
+cd claude-code-ez-switch
+python ezswitch.py
 ```
 
-### Key Components:
+## Quick Start
 
-- **ClaudeConfigSwitcher**: Main application class
-- **Configuration Frames**: Dynamic UI for different API configurations
-- **Environment Management**: PowerShell integration for Windows environment variables
-- **Persistent Storage**: JSON-based configuration storage
+1. Run `python ezswitch.py`  
+2. Select your configuration (Z.ai, Anthropic, or Custom) and enter your API key/URL  
+3. Click **Apply Configuration**  
+4. Close and reopen all Claude Code applications (VS Code, terminals, etc.) for changes to take effect  
+5. If switching to Anthropic, run `/login` in the CLI to re-authenticate  
 
-## 🤝 Contributing
+## How It Works
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+The app sets these Windows environment variables:  
 
-### Development Setup:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly on Windows
-5. Submit a pull request
+- `ANTHROPIC_AUTH_TOKEN`: Your API key  
+- `ANTHROPIC_BASE_URL`: Your API endpoint (if custom)  
 
-## 📄 License
+Both Claude Code CLI and the VS Code extension read these variables on startup.  
 
-This project is open source under the MIT License. See the [LICENSE](LICENSE) file for details.
+## Troubleshooting
+
+- **Changes not working?** Close all Claude Code apps and reopen them. Variables only load on startup.  
+- **Permission denied?** Run the app as Administrator.  
+- **Anthropic login failed?** Run `/login` in the CLI after switching to Anthropic.  
+
+## License
+
+[MIT License](https://github.com/techcow2/claude-code-ez-switch/blob/master/LICENSE)
+```

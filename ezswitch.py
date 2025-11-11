@@ -40,10 +40,10 @@ class ClaudeConfigSwitcher:
         self.root.configure(bg=self.bg_color)
         
         # Configure styles
-        style.configure('Title.TLabel', background=self.bg_color, foreground=self.fg_color, 
-                       font=('Segoe UI', 16, 'bold'))
-        style.configure('Subtitle.TLabel', background=self.bg_color, foreground=self.fg_color, 
-                       font=('Segoe UI', 11))
+        style.configure('Title.TLabel', background=self.bg_color, foreground=self.fg_color,
+                       font=('Segoe UI', 22, 'bold'))
+        style.configure('Subtitle.TLabel', background=self.bg_color, foreground=self.fg_color,
+                       font=('Segoe UI', 13))
         style.configure('TLabel', background=self.bg_color, foreground=self.fg_color, 
                        font=('Segoe UI', 10))
         style.configure('TRadiobutton', background=self.bg_color, foreground=self.fg_color, 
@@ -79,22 +79,22 @@ class ClaudeConfigSwitcher:
         
         # Current Status Frame
         status_frame = tk.Frame(content_frame, bg=self.entry_bg, relief=tk.FLAT, bd=0)
-        status_frame.pack(fill=tk.X, pady=(0, 15), padx=2)
+        status_frame.pack(fill=tk.X, pady=(0, 20), padx=2)
         
-        status_title = ttk.Label(status_frame, text="Current Status:", 
-                                font=('Segoe UI', 10, 'bold'))
-        status_title.pack(anchor=tk.W, padx=15, pady=(10, 5))
-        
-        self.status_label = tk.Label(status_frame, text="Checking...", 
+        status_title = ttk.Label(status_frame, text="Current Status:",
+                                font=('Segoe UI', 15, 'bold'))
+        status_title.pack(anchor=tk.W, padx=15, pady=(15, 10))
+
+        self.status_label = tk.Label(status_frame, text="Checking...",
                                      bg=self.entry_bg, fg=self.fg_color,
-                                     font=('Segoe UI', 9), anchor=tk.W, justify=tk.LEFT)
-        self.status_label.pack(anchor=tk.W, padx=15, pady=(0, 10), fill=tk.X)
+                                     font=('Segoe UI', 14, 'bold'), anchor=tk.W, justify=tk.LEFT)
+        self.status_label.pack(anchor=tk.W, padx=15, pady=(0, 15), fill=tk.X)
         
         # Loading indicator (hidden by default)
         self.loading_frame = tk.Frame(status_frame, bg=self.entry_bg)
-        self.loading_label = tk.Label(self.loading_frame, text="⟳ Applying configuration...", 
+        self.loading_label = tk.Label(self.loading_frame, text="⟳ Applying configuration...",
                                      bg=self.entry_bg, fg=self.accent_color,
-                                     font=('Segoe UI', 9, 'bold'), anchor=tk.W)
+                                     font=('Segoe UI', 14, 'bold'), anchor=tk.W)
         self.loading_label.pack(side=tk.LEFT, padx=15)
         
         self.progress_bar = ttk.Progressbar(self.loading_frame, mode='indeterminate', length=200)
@@ -554,26 +554,17 @@ class ClaudeConfigSwitcher:
             user_base_url = result.stdout.strip()
             
             if user_base_url and 'z.ai' in user_base_url:
-                status_text = "✓ Currently using z.ai API\n"
-                if user_auth_token:
-                    masked_key = user_auth_token[:8] + "..." + user_auth_token[-4:] if len(user_auth_token) > 12 else "***"
-                    status_text += f"API Key: {masked_key}"
+                status_text = "✓ Currently using z.ai API"
                 self.status_label.configure(text=status_text, fg=self.success_color)
             elif user_base_url and 'moonshot.ai' in user_base_url:
-                status_text = "✓ Currently using Moonshot.ai API\n"
-                if user_auth_token:
-                    masked_key = user_auth_token[:8] + "..." + user_auth_token[-4:] if len(user_auth_token) > 12 else "***"
-                    status_text += f"API Key: {masked_key}"
+                status_text = "✓ Currently using Moonshot.ai API"
                 self.status_label.configure(text=status_text, fg=self.success_color)
             elif user_base_url and user_auth_token:
                 status_text = f"✓ Currently using Custom Base URL\n"
-                status_text += f"Base URL: {user_base_url}\n"
-                masked_key = user_auth_token[:8] + "..." + user_auth_token[-4:] if len(user_auth_token) > 12 else "***"
-                status_text += f"API Key: {masked_key}"
+                status_text += f"Base URL: {user_base_url}"
                 self.status_label.configure(text=status_text, fg=self.success_color)
             elif user_auth_token and not user_base_url:
-                masked_key = user_auth_token[:8] + "..." + user_auth_token[-4:] if len(user_auth_token) > 12 else "***"
-                status_text = f"✓ Currently using Claude API Key\nAPI Key: {masked_key}"
+                status_text = "✓ Currently using Claude API Key"
                 self.status_label.configure(text=status_text, fg=self.success_color)
             else:
                 status_text = "✓ Currently using Claude Subscription\n(No environment variables set)"
@@ -615,7 +606,23 @@ class ClaudeConfigSwitcher:
                 # Set z.ai environment variables
                 commands = [
                     f"[System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', '{zai_key}', 'User')",
-                    f"[System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/anthropic', 'User')"
+                    f"[System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/anthropic', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('API_TIMEOUT_MS', '3000000', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_MODEL', 'glm-4.6', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_OPUS_MODEL', 'glm-4.6', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_SONNET_MODEL', 'glm-4.6', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'glm-4.6', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ENABLE_THINKING', 'true', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ENABLE_STREAMING', 'true', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_SAFE_MODE', 'false', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_TEMPERATURE', '0.2', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_STREAM', 'true', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', '1', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('CLAUDE_CODE_DISABLE_ANALYTICS', '1', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('DISABLE_TELEMETRY', '1', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('DISABLE_ERROR_REPORTING', '1', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('MAX_THINKING_TOKENS', '4096', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR', 'true', 'User')"
                 ]
                 
                 for cmd in commands:

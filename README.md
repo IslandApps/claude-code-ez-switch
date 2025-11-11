@@ -1,6 +1,6 @@
 # Claude Code EZ Switch
 
-A Windows desktop application written in Python, that allows you to easily switch between different Claude Code API configurations, including Z.ai, Anthropic Claude, and custom endpoints.
+A Windows desktop application written in Python, that allows you to easily switch between different Claude Code API configurations, including Z.ai, Anthropic Claude, Moonshot.ai, and custom endpoints.
 
 
 ![Claude Code EZ Switch](https://img.shields.io/badge/Platform-Windows-blue?style=flat-square)
@@ -9,7 +9,8 @@ A Windows desktop application written in Python, that allows you to easily switc
 
 ## 🚀 Features
 
-- **Easy Configuration Switching**: Seamlessly switch between Z.ai, Anthropic Claude, and custom API endpoints
+- **Easy Configuration Switching**: Seamlessly switch between Z.ai, Anthropic Claude, Moonshot.ai, and custom API endpoints
+- **Enhanced Moonshot.ai Compatibility**: Full support for Kimi model family with endpoint verification
 - **Persistent Storage**: Securely saves your API keys locally for convenience
 - **Real-time Status Display**: Shows your current configuration at a glance
 - **Modern Dark Theme**: Clean, professional interface with dark mode styling
@@ -72,6 +73,14 @@ Simply run `ezswitch.py` to open the configuration manager.
   - **API Key Mode**: Enter your Claude API key
 - Click "Apply Configuration"
 
+#### **Moonshot.ai Configuration**
+- Select "Moonshot.ai" radio button
+- Enter your Moonshot.ai API key
+- Click "Apply Configuration"
+- **📝 Note**: Moonshot.ai uses the Kimi model family (kimi-v1, kimi-v1.5, kimi-v1.5-long) which are compatible with Claude Code
+- Ensure your Moonshot.ai account has API access enabled
+- Verify your API key has sufficient credits for usage
+
 #### **Custom Configuration**
 - Select "Custom" radio button
 - Enter your custom base URL (e.g., `https://your-api-endpoint.com`)
@@ -115,6 +124,18 @@ The application manages the following Windows user environment variables that ar
 - `ANTHROPIC_AUTH_TOKEN`: Your Z.ai API key
 - `ANTHROPIC_BASE_URL`: `https://api.z.ai/api/anthropic`
 
+**Moonshot.ai**:
+- `ANTHROPIC_AUTH_TOKEN`: Your Moonshot.ai API key
+- `ANTHROPIC_BASE_URL`: `https://api.moonshot.ai/anthropic`
+- **🔍 Endpoint Verification**: Test your Moonshot.ai endpoint with:
+  ```bash
+  curl -H "Authorization: Bearer YOUR_API_KEY" https://api.moonshot.ai/anthropic/v1/models
+  ```
+- **⚡ Rate Limits**: Moonshot.ai has different rate limits for free vs paid accounts
+- **🌐 Alternative Endpoints**: If the main endpoint is unavailable, try:
+  - Primary: `https://api.moonshot.ai/anthropic`
+  - Alternative: `https://api.moonshot.cn/anthropic`
+
 **Claude API**:
 - `ANTHROPIC_AUTH_TOKEN`: Your Claude API key
 - `ANTHROPIC_BASE_URL`: Not set (uses default)
@@ -149,6 +170,14 @@ The application manages the following Windows user environment variables that ar
 5. **PowerShell command failures**
    - Run the application as Administrator if you encounter permission issues
    - Ensure PowerShell execution policy allows running scripts
+
+6. **Moonshot.ai specific issues**
+   - **"Invalid API key" error**: Verify your Moonshot.ai API key is correct and has proper permissions
+   - **"Endpoint not found" error**: Check if Moonshot.ai has changed their API endpoint URL
+   - **Slow response times**: Moonshot.ai may have higher latency compared to other providers
+   - **Model not available**: Ensure you're using a supported model (kimi-v1, kimi-v1.5, kimi-v1.5-long)
+   - **Rate limiting**: Check your account limits at https://platform.moonshot.ai/account/limits
+   - **Regional restrictions**: Some Moonshot.ai features may be restricted based on your geographic location
 
 ## 📝 Development
 

@@ -118,11 +118,17 @@ class ClaudeConfigSwitcher:
         zai_radio.pack(anchor=tk.W, pady=(0, 5))
         
         # Claude radio button
-        claude_radio = ttk.Radiobutton(radio_container, text="Anthropic", 
+        claude_radio = ttk.Radiobutton(radio_container, text="Anthropic",
                                       variable=self.config_var, value="claude",
                                       command=self.on_config_change)
         claude_radio.pack(anchor=tk.W, pady=(0, 5))
-        
+
+        # Moonshot.ai radio button
+        moonshot_radio = ttk.Radiobutton(radio_container, text="Moonshot.ai",
+                                        variable=self.config_var, value="moonshot",
+                                        command=self.on_config_change)
+        moonshot_radio.pack(anchor=tk.W, pady=(0, 5))
+
         # Custom radio button
         custom_radio = ttk.Radiobutton(radio_container, text="Custom", 
                                       variable=self.config_var, value="custom",
@@ -136,6 +142,7 @@ class ClaudeConfigSwitcher:
         # Create all configuration frames but don't pack them yet
         self.create_zai_frame()
         self.create_claude_frame()
+        self.create_moonshot_frame()
         self.create_custom_frame()
         
         # Show initial configuration
@@ -290,12 +297,30 @@ class ClaudeConfigSwitcher:
         # Add border to entry
         custom_key_border = tk.Frame(self.custom_frame, bg=self.accent_color, height=2)
         custom_key_border.pack(fill=tk.X, padx=15, pady=(0, 10))
-        
+
         # Bind events to save API keys when they change
         self.zai_key_entry.bind('<KeyRelease>', lambda e: self.save_api_keys())
         self.claude_key_entry.bind('<KeyRelease>', lambda e: self.save_api_keys())
+        self.moonshot_key_entry.bind('<KeyRelease>', lambda e: self.save_api_keys())
         self.custom_key_entry.bind('<KeyRelease>', lambda e: self.save_api_keys())
         self.custom_url_entry.bind('<KeyRelease>', lambda e: self.save_api_keys())
+
+    def create_moonshot_frame(self):
+        """Create Moonshot.ai configuration frame"""
+        self.moonshot_frame = tk.LabelFrame(self.dynamic_config_container, text="", bg=self.entry_bg,
+                                       fg=self.fg_color, relief=tk.FLAT, bd=2)
+
+        moonshot_key_label = ttk.Label(self.moonshot_frame, text="Moonshot.ai API Key:")
+        moonshot_key_label.pack(anchor=tk.W, padx=15, pady=(10, 2))
+
+        self.moonshot_key_entry = tk.Entry(self.moonshot_frame, bg=self.entry_bg, fg=self.fg_color,
+                                          insertbackground=self.fg_color, relief=tk.FLAT,
+                                          font=('Segoe UI', 10), bd=0, show="*")
+        self.moonshot_key_entry.pack(fill=tk.X, padx=15, pady=(0, 2), ipady=8)
+
+        # Add border to entry
+        moonshot_key_border = tk.Frame(self.moonshot_frame, bg=self.accent_color, height=2)
+        moonshot_key_border.pack(fill=tk.X, padx=15, pady=(0, 10))
     
     def load_existing_api_keys(self):
         """Load existing API keys from environment variables and pre-fill them"""
@@ -378,7 +403,12 @@ class ClaudeConfigSwitcher:
                 self.claude_key_entry.delete(0, tk.END)
                 self.claude_key_entry.insert(0, saved_keys['claude_key'])
                 self.claude_key_entry.configure(state=tk.DISABLED)
-            
+
+            # Load Moonshot.ai key
+            if 'moonshot_key' in saved_keys:
+                self.moonshot_key_entry.delete(0, tk.END)
+                self.moonshot_key_entry.insert(0, saved_keys['moonshot_key'])
+
             # Load custom config
             if 'custom_url' in saved_keys:
                 self.custom_url_entry.delete(0, tk.END)
@@ -414,7 +444,12 @@ class ClaudeConfigSwitcher:
             claude_key = self.claude_key_entry.get().strip()
             if claude_key:
                 saved_keys['claude_key'] = claude_key
-            
+
+            # Save Moonshot.ai key if not empty
+            moonshot_key = self.moonshot_key_entry.get().strip()
+            if moonshot_key:
+                saved_keys['moonshot_key'] = moonshot_key
+
             # Save custom config if not empty
             custom_url = self.custom_url_entry.get().strip()
             if custom_url:
@@ -448,7 +483,8 @@ class ClaudeConfigSwitcher:
         self.zai_frame.pack_forget()
         self.custom_frame.pack_forget()
         self.claude_frame.pack_forget()
-        
+        self.moonshot_frame.pack_forget()
+
         # Show the selected frame
         if self.config_var.get() == "zai":
             self.zai_frame.pack(fill=tk.X, pady=(0, 10))
@@ -456,6 +492,8 @@ class ClaudeConfigSwitcher:
             self.custom_frame.pack(fill=tk.X, pady=(0, 10))
         elif self.config_var.get() == "claude":
             self.claude_frame.pack(fill=tk.X, pady=(0, 10))
+        elif self.config_var.get() == "moonshot":
+            self.moonshot_frame.pack(fill=tk.X, pady=(0, 10))
     
     def on_claude_mode_change(self):
         """Handle Claude mode radio button change"""
@@ -470,10 +508,12 @@ class ClaudeConfigSwitcher:
             self.zai_key_entry.configure(show="")
             self.custom_key_entry.configure(show="")
             self.claude_key_entry.configure(show="")
+            self.moonshot_key_entry.configure(show="")
         else:
             self.zai_key_entry.configure(show="*")
             self.custom_key_entry.configure(show="*")
             self.claude_key_entry.configure(show="*")
+            self.moonshot_key_entry.configure(show="*")
     
     def close_application(self):
         """Properly close the application"""
@@ -515,6 +555,12 @@ class ClaudeConfigSwitcher:
             
             if user_base_url and 'z.ai' in user_base_url:
                 status_text = "✓ Currently using z.ai API\n"
+                if user_auth_token:
+                    masked_key = user_auth_token[:8] + "..." + user_auth_token[-4:] if len(user_auth_token) > 12 else "***"
+                    status_text += f"API Key: {masked_key}"
+                self.status_label.configure(text=status_text, fg=self.success_color)
+            elif user_base_url and 'moonshot.ai' in user_base_url:
+                status_text = "✓ Currently using Moonshot.ai API\n"
                 if user_auth_token:
                     masked_key = user_auth_token[:8] + "..." + user_auth_token[-4:] if len(user_auth_token) > 12 else "***"
                     status_text += f"API Key: {masked_key}"
@@ -616,7 +662,34 @@ class ClaudeConfigSwitcher:
                                    "Custom configuration applied successfully!\n\n"
                                    "IMPORTANT: You must close and reopen VS Code or any application using Claude Code for changes to take effect.\n"
                                    "If using terminal only, close and reopen the terminal."))
-                
+
+            elif self.config_var.get() == "moonshot":
+                # Apply Moonshot.ai configuration
+                moonshot_key = self.moonshot_key_entry.get().strip()
+
+                if not moonshot_key:
+                    self.root.after(0, lambda: messagebox.showerror("Error", "Please enter your Moonshot.ai API key"))
+                    self.root.after(0, self.hide_loading)
+                    return
+
+                # Set Moonshot.ai environment variables
+                commands = [
+                    f"[System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', '{moonshot_key}', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://api.moonshot.ai/anthropic', 'User')"
+                ]
+
+                for cmd in commands:
+                    success, output = self.run_powershell_command(cmd)
+                    if not success:
+                        self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to set environment variable:\n{msg}"))
+                        self.root.after(0, self.hide_loading)
+                        return
+
+                self.root.after(0, lambda: messagebox.showinfo("Success",
+                                   "Moonshot.ai configuration applied successfully!\n\n"
+                                   "IMPORTANT: You must close and reopen VS Code or any application using Claude Code for changes to take effect.\n"
+                                   "If using terminal only, close and reopen the terminal."))
+
             else:
                 # Apply Claude configuration
                 if self.claude_mode_var.get() == "subscription":

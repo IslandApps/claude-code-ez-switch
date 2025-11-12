@@ -260,11 +260,13 @@ class ClaudeConfigSwitcher:
 
         # Populate environment variables text
         zai_env_vars = [
-            "ANTHROPIC_AUTH_TOKEN=<your-zai-api-key>",
-            "ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic",
-            "ANTHROPIC_DEFAULT_OPUS_MODEL=GLM-4.6",
-            "ANTHROPIC_DEFAULT_SONNET_MODEL=GLM-4.6",
-            "ANTHROPIC_DEFAULT_HAIKU_MODEL=GLM-4.5-Air"
+            "ANTHROPIC_AUTH_TOKEN=<your-zai-api-key> (User level)",
+            "ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic (User level)",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL=GLM-4.6 (User level)",
+            "ANTHROPIC_DEFAULT_SONNET_MODEL=GLM-4.6 (User level)",
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL=GLM-4.5-Air (User level)",
+            "",
+            "(Note: All variables set at User level - no admin rights required)"
         ]
         self.zai_env_vars_text.configure(state=tk.NORMAL)
         self.zai_env_vars_text.insert('1.0', '\n'.join(zai_env_vars))
@@ -356,10 +358,10 @@ class ClaudeConfigSwitcher:
 
         # Populate environment variables text
         custom_env_vars = [
-            "ANTHROPIC_AUTH_TOKEN=<your-custom-api-key>",
-            "ANTHROPIC_BASE_URL=<your-custom-base-url>",
+            "ANTHROPIC_AUTH_TOKEN=<your-custom-api-key> (User level)",
+            "ANTHROPIC_BASE_URL=<your-custom-base-url> (User level)",
             "",
-            "(Note: Only basic auth token and base URL are set)"
+            "(Note: Only basic auth token and base URL are set at User level)"
         ]
         self.custom_env_vars_text.configure(state=tk.NORMAL)
         self.custom_env_vars_text.insert('1.0', '\n'.join(custom_env_vars))
@@ -398,10 +400,10 @@ class ClaudeConfigSwitcher:
 
         # Populate environment variables text
         moonshot_env_vars = [
-            "ANTHROPIC_AUTH_TOKEN=<your-moonshot-api-key>",
-            "ANTHROPIC_BASE_URL=https://api.moonshot.ai/anthropic",
+            "ANTHROPIC_AUTH_TOKEN=<your-moonshot-api-key> (User level)",
+            "ANTHROPIC_BASE_URL=https://api.moonshot.ai/anthropic (User level)",
             "",
-            "(Note: Moonshot.ai API endpoint with your API key)"
+            "(Note: Moonshot.ai API endpoint with your API key at User level)"
         ]
         self.moonshot_env_vars_text.configure(state=tk.NORMAL)
         self.moonshot_env_vars_text.insert('1.0', '\n'.join(moonshot_env_vars))
@@ -725,13 +727,13 @@ class ClaudeConfigSwitcher:
                     self.root.after(0, self.hide_loading)
                     return
                 
-                # Set z.ai environment variables
+                # Set z.ai environment variables (all at User level to avoid admin requirements)
                 commands = [
                     f"[System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', '{zai_key}', 'User')",
                     f"[System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/anthropic', 'User')",
-                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_OPUS_MODEL', 'GLM-4.6', 'Machine')",
-                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_SONNET_MODEL', 'GLM-4.6', 'Machine')",
-                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'GLM-4.5-Air', 'Machine')"
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_OPUS_MODEL', 'GLM-4.6', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_SONNET_MODEL', 'GLM-4.6', 'User')",
+                    "[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'GLM-4.5-Air', 'User')"
                 ]
                 
                 for cmd in commands:

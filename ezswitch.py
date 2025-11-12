@@ -6,6 +6,7 @@ import sys
 import threading
 import json
 from pathlib import Path
+from PIL import Image, ImageTk
 
 class ClaudeConfigSwitcher:
     def __init__(self, root):
@@ -66,6 +67,30 @@ class ClaudeConfigSwitcher:
         # Content frame (everything except footer)
         content_frame = tk.Frame(main_frame, bg=self.bg_color)
         content_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Light image container with light background
+        try:
+            # Load and resize the light image
+            light_image = Image.open("images/light.png")
+            # Make it very small (32x32 pixels)
+            light_image = light_image.resize((32, 32), Image.Resampling.LANCZOS)
+            self.light_photo = ImageTk.PhotoImage(light_image)
+            
+            # Create a frame with light background for the image
+            image_container = tk.Frame(content_frame, bg="#f0f0f0", relief=tk.RAISED, bd=1)
+            image_container.pack(pady=(0, 15))
+            
+            # Add some padding inside the container
+            inner_frame = tk.Frame(image_container, bg="#f0f0f0", padx=8, pady=8)
+            inner_frame.pack()
+            
+            # Create the image label
+            light_label = tk.Label(inner_frame, image=self.light_photo, bg="#f0f0f0")
+            light_label.pack()
+            
+        except Exception as e:
+            # If image loading fails, continue without it
+            print(f"Could not load light image: {e}")
         
         # Title
         title_label = ttk.Label(content_frame, text="Claude Code EZ Switch",
@@ -254,7 +279,7 @@ class ClaudeConfigSwitcher:
         # Environment variables display (hidden by default)
         self.zai_env_frame = tk.Frame(self.zai_frame, bg=self.entry_bg)
         self.zai_env_vars_text = tk.Text(self.zai_env_frame, bg=self.entry_bg, fg="#cccccc",
-                                         font=('Consolas', 8), height=12, wrap=tk.WORD,
+                                         font=('Consolas', 10), height=12, wrap=tk.WORD,
                                          relief=tk.FLAT, bd=0, state=tk.DISABLED)
         self.zai_env_vars_text.pack(fill=tk.X, padx=15, pady=(0, 10))
 
@@ -305,7 +330,7 @@ class ClaudeConfigSwitcher:
         # Environment variables display (hidden by default)
         self.claude_env_frame = tk.Frame(self.claude_frame, bg=self.entry_bg)
         self.claude_env_vars_text = tk.Text(self.claude_env_frame, bg=self.entry_bg, fg="#cccccc",
-                                           font=('Consolas', 8), height=4, wrap=tk.WORD,
+                                           font=('Consolas', 10), height=4, wrap=tk.WORD,
                                            relief=tk.FLAT, bd=0, state=tk.DISABLED)
         self.claude_env_vars_text.pack(fill=tk.X, padx=15, pady=(0, 10))
 
@@ -352,7 +377,7 @@ class ClaudeConfigSwitcher:
         # Environment variables display (hidden by default)
         self.custom_env_frame = tk.Frame(self.custom_frame, bg=self.entry_bg)
         self.custom_env_vars_text = tk.Text(self.custom_env_frame, bg=self.entry_bg, fg="#cccccc",
-                                           font=('Consolas', 8), height=4, wrap=tk.WORD,
+                                           font=('Consolas', 10), height=4, wrap=tk.WORD,
                                            relief=tk.FLAT, bd=0, state=tk.DISABLED)
         self.custom_env_vars_text.pack(fill=tk.X, padx=15, pady=(0, 10))
 
@@ -394,7 +419,7 @@ class ClaudeConfigSwitcher:
         # Environment variables display (hidden by default)
         self.moonshot_env_frame = tk.Frame(self.moonshot_frame, bg=self.entry_bg)
         self.moonshot_env_vars_text = tk.Text(self.moonshot_env_frame, bg=self.entry_bg, fg="#cccccc",
-                                             font=('Consolas', 8), height=4, wrap=tk.WORD,
+                                             font=('Consolas', 10), height=4, wrap=tk.WORD,
                                              relief=tk.FLAT, bd=0, state=tk.DISABLED)
         self.moonshot_env_vars_text.pack(fill=tk.X, padx=15, pady=(0, 10))
 

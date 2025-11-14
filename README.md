@@ -11,13 +11,12 @@
 
 ## Requirements
 - Python 3.7+
-- Windows 10+ OR Ubuntu 18.04+
+- Windows 10+ OR Linux
 - Claude Code CLI
 
 ## Platform Support
 - **Windows**: Full support with GUI styling and environment variable management
-- **Ubuntu**: Full support with shell configuration management (.bashrc)
-- **Other Linux distributions**: Should work with minor modifications
+- **Linux**: Full support with shell configuration management (.bashrc, .zshrc, .profile, .bash_profile)
 
 ## Quick Start
 ```bash
@@ -32,10 +31,9 @@ python ezswitch.py
 3. Click **Apply Configuration**
 4. Restart Claude Code apps
 
-### Ubuntu/Linux Notes
-- Environment variables are written to `~/.bashrc`
-- You may need to run `source ~/.bashrc` or restart your terminal after applying configuration
-- The app supports multiple shell configurations (.bashrc, .profile, .zshrc, .bash_profile)
+### Linux Notes
+- Environment variables are written to your shell configuration file
+- Run `source ~/.bashrc` (or your shell config) or restart terminal after applying configuration
 
 ## License
 MIT

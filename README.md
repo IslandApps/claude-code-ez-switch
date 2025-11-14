@@ -1,22 +1,22 @@
 # Claude Code EZ Switch
 
-**A simple alternative to Claude Code Router** - Easy GUI for adding and managing your Z.ai API keys with Claude Code.
+A simple GUI application for managing Claude Code API configurations - easily switch between Claude subscription and Z.ai API keys.
 
 ## Features
-- Simple graphical interface
-- One-click configuration switching
-- Saves API keys locally
-- Real-time status display
-- No command line required
+- **Easy GUI Interface**: No command line required
+- **One-Click Switching**: Toggle between Z.ai and Claude subscription
+- **Secure Local Storage**: API keys saved locally in `~/.claude_ez_switch/`
+- **Real-time Status**: Visual feedback for configuration changes
+- **Cross-Platform**: Windows and Linux support with platform-specific optimizations
 
 ## Requirements
 - Python 3.7+
-- Windows 10+ OR Linux
+- Windows 10+ or Linux
 - Claude Code CLI
 
 ## Platform Support
-- **Windows**: Full support with GUI styling and environment variable management
-- **Linux**: Full support with shell configuration management (.bashrc, .zshrc, .profile, .bash_profile)
+- **Windows**: Full support with registry-based environment variable management
+- **Linux**: Full support with shell configuration management (.bashrc, .zshrc, .profile)
 
 ## Quick Start
 ```bash
@@ -26,14 +26,20 @@ python ezswitch.py
 ```
 
 ## Usage
-1. Run `python ezswitch.py`
-2. Select provider and enter API key
-3. Click **Apply Configuration**
-4. Restart Claude Code apps
+1. Launch the app with `python ezswitch.py`
+2. Select **Z.ai** or **Claude Subscription**
+3. Enter your Z.ai API key (if applicable)
+4. Click **Apply Configuration**
+5. Restart your Claude Code applications
 
 ### Linux Notes
-- Environment variables are written to your shell configuration file
-- Run `source ~/.bashrc` (or your shell config) or restart terminal after applying configuration
+- After applying configuration, run `source ~/.bashrc` (or your shell config) or restart terminal
+
+## How It Works
+- **Z.ai Mode**: Sets `ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic`
+- **Claude Mode**: Removes custom environment variables to use default Claude subscription
+- Configuration stored in `~/.claude_ez_switch/config.json`
+- Updates both system environment variables and Claude Code settings
 
 ## License
 MIT

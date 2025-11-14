@@ -113,7 +113,7 @@ class ClaudeConfigSwitcher:
         # Platform-specific window settings
         if IS_LINUX:
             # Linux: More conservative size and allow resizing
-            self.root.geometry("500x850")
+            self.root.geometry("550x850")
             self.root.resizable(True, True)
             self.root.minsize(450, 700)
         else:
@@ -172,15 +172,42 @@ class ClaudeConfigSwitcher:
                        font=font_manager.get_font(13))
         style.configure('TLabel', background=self.bg_color, foreground=self.fg_color,
                        font=font_manager.get_font(10))
-        style.configure('TRadiobutton', background=self.bg_color, foreground=self.fg_color,
-                       font=font_manager.get_font(10))
-        style.map('TRadiobutton', background=[('active', self.bg_color)])
+
+        # Linux-specific radio button styling - use custom approach for larger indicators
+        if IS_LINUX:
+            # Custom radio button variables and storage
+            self.custom_radio_buttons = {}
+            # Don't use ttk radio buttons on Linux - we'll create custom ones
+        else:
+            style.configure('TRadiobutton', background=self.bg_color, foreground=self.fg_color,
+                           font=font_manager.get_font(10))
+            style.map('TRadiobutton', background=[('active', self.bg_color)])
+
+        # Linux-specific combobox styling for larger dropdown arrow
+        if IS_LINUX:
+            # Keep the original theme but enhance combobox visibility
+            style.configure('TCombobox',
+                           fieldbackground=self.entry_bg,
+                           background=self.entry_bg,
+                           foreground=self.fg_color,
+                           arrowsize=18,  # Larger arrow
+                           padding=(6, 3))
+            style.map('TCombobox',
+                     background=[('readonly', self.entry_bg), ('active', "#4a4a4a")],
+                     fieldbackground=[('readonly', self.entry_bg)])
+
+            # Linux-specific checkbox styling for better visibility
+            style.configure('TCheckbutton', background=self.bg_color, foreground=self.fg_color,
+                           font=font_manager.get_font(12),  # Larger font
+                           padding=(10, 6))  # More padding
+            style.map('TCheckbutton', background=[('active', self.bg_color)])
         
         self.create_widgets()
         self.load_saved_api_keys()
         self.load_existing_api_keys()
         # Update UI to match loaded configuration
         self.on_config_change()
+        self.on_claude_mode_change()
         self.check_current_status()
         
         # Set up focus management for Linux
@@ -410,8 +437,8 @@ class ClaudeConfigSwitcher:
         try:
             # Load and resize the light image
             light_image = Image.open("images/light.png")
-            # Make it very small (32x32 pixels)
-            light_image = light_image.resize((32, 32), Image.Resampling.LANCZOS)
+            # Make it larger (64x64 pixels)
+            light_image = light_image.resize((64, 64), Image.Resampling.LANCZOS)
             self.light_photo = ImageTk.PhotoImage(light_image)
             
             # Create a frame with light background for the image
@@ -452,19 +479,19 @@ class ClaudeConfigSwitcher:
         status_frame.pack(fill=tk.X, pady=(0, 20), padx=2)
         
         status_title = ttk.Label(status_frame, text="Current Status:",
-                                font=font_manager.get_font(15, 'bold'))
+                                font=font_manager.get_font(13, 'bold'))
         status_title.pack(anchor=tk.W, padx=15, pady=(15, 10))
 
         self.status_label = tk.Label(status_frame, text="Checking...",
                                      bg=self.entry_bg, fg=self.fg_color,
-                                     font=font_manager.get_font(14, 'bold'), anchor=tk.W, justify=tk.LEFT)
+                                     font=font_manager.get_font(12, 'bold'), anchor=tk.W, justify=tk.LEFT)
         self.status_label.pack(anchor=tk.W, padx=15, pady=(0, 15), fill=tk.X)
         
         # Loading indicator (hidden by default)
         self.loading_frame = tk.Frame(status_frame, bg=self.entry_bg)
         self.loading_label = tk.Label(self.loading_frame, text="⟳ Applying configuration...",
                                      bg=self.entry_bg, fg=self.accent_color,
-                                     font=font_manager.get_font(14, 'bold'), anchor=tk.W)
+                                     font=font_manager.get_font(12, 'bold'), anchor=tk.W)
         self.loading_label.pack(side=tk.LEFT, padx=15)
         
         self.progress_bar = ttk.Progressbar(self.loading_frame, mode='indeterminate', length=200)
@@ -480,19 +507,31 @@ class ClaudeConfigSwitcher:
         # Configuration radio buttons container
         radio_container = tk.Frame(content_frame, bg=self.bg_color)
         radio_container.pack(fill=tk.X, pady=(0, 10))
-        
-        # Z.ai radio button
-        zai_radio = ttk.Radiobutton(radio_container, text="Z.ai", 
-                                   variable=self.config_var, value="zai",
-                                   command=self.on_config_change)
-        zai_radio.pack(anchor=tk.W, pady=(0, 5))
-        
-    
-        # Custom radio button
-        custom_radio = ttk.Radiobutton(radio_container, text="Custom", 
-                                      variable=self.config_var, value="custom",
-                                      command=self.on_config_change)
-        custom_radio.pack(anchor=tk.W, pady=(0, 5))
+
+        if IS_LINUX:
+            # Create custom radio buttons for Linux with larger indicators
+            self.create_custom_radio_button(radio_container, "Z.ai", "zai")
+            self.create_custom_radio_button(radio_container, "Claude", "claude")
+            self.create_custom_radio_button(radio_container, "Custom", "custom")
+        else:
+            # Use standard ttk radio buttons for other platforms
+            # Z.ai radio button
+            zai_radio = ttk.Radiobutton(radio_container, text="Z.ai",
+                                       variable=self.config_var, value="zai",
+                                       command=self.on_config_change, style='TRadiobutton')
+            zai_radio.pack(anchor=tk.W, pady=(0, 5))
+
+            # Claude radio button
+            claude_radio = ttk.Radiobutton(radio_container, text="Claude",
+                                         variable=self.config_var, value="claude",
+                                         command=self.on_config_change, style='TRadiobutton')
+            claude_radio.pack(anchor=tk.W, pady=(0, 5))
+
+            # Custom radio button
+            custom_radio = ttk.Radiobutton(radio_container, text="Custom",
+                                          variable=self.config_var, value="custom",
+                                          command=self.on_config_change, style='TRadiobutton')
+            custom_radio.pack(anchor=tk.W, pady=(0, 5))
         
         # Dynamic configuration container (where different configs will be shown)
         self.dynamic_config_container = tk.Frame(content_frame, bg=self.bg_color)
@@ -500,6 +539,7 @@ class ClaudeConfigSwitcher:
         
         # Create all configuration frames but don't pack them yet
         self.create_zai_frame()
+        self.create_claude_frame()
         self.create_custom_frame()
 
         # Show/Hide Password Checkbutton
@@ -508,10 +548,12 @@ class ClaudeConfigSwitcher:
                                            variable=self.show_password_var,
                                            command=self.toggle_password_visibility,
                                            bg=self.bg_color, fg=self.fg_color,
-                                           selectcolor=self.entry_bg,
+                                           selectcolor=self.bg_color,
                                            activebackground=self.bg_color,
                                            activeforeground=self.fg_color,
-                                           font=font_manager.get_font(9))
+                                           highlightthickness=0, bd=0,
+                                           font=font_manager.get_font(9 if not IS_LINUX else 11),
+                                           padx=5, pady=5)
         show_password_check.pack(anchor=tk.W, pady=(10, 0))
 
         # Show Environment Variables Checkbutton
@@ -520,10 +562,12 @@ class ClaudeConfigSwitcher:
                                            variable=self.show_env_vars_var,
                                            command=self.toggle_env_vars_visibility,
                                            bg=self.bg_color, fg=self.fg_color,
-                                           selectcolor=self.entry_bg,
+                                           selectcolor=self.bg_color,
                                            activebackground=self.bg_color,
                                            activeforeground=self.fg_color,
-                                           font=font_manager.get_font(9))
+                                           highlightthickness=0, bd=0,
+                                           font=font_manager.get_font(9 if not IS_LINUX else 11),
+                                           padx=5, pady=5)
         show_env_vars_check.pack(anchor=tk.W, pady=(5, 0))
         
         # Buttons Frame using Grid for better layout
@@ -588,6 +632,124 @@ class ClaudeConfigSwitcher:
         github_link.pack()
         github_link.bind("<Button-1>", lambda e: self.open_github_link())
     
+    def create_custom_radio_button(self, parent, text, value):
+        """Create a custom radio button with larger indicator for Linux"""
+        # Create frame for the radio button
+        radio_frame = tk.Frame(parent, bg=self.bg_color)
+        radio_frame.pack(fill=tk.X, pady=(0, 12))
+
+        # Create canvas for drawing the radio button circle
+        canvas_size = 24  # Larger than default
+        canvas = tk.Canvas(radio_frame, width=canvas_size, height=canvas_size,
+                          bg=self.bg_color, highlightthickness=0, bd=0)
+        canvas.pack(side=tk.LEFT, padx=(0, 10))
+
+        # Draw the radio button circle (outer ring)
+        outer_circle = canvas.create_oval(2, 2, canvas_size-2, canvas_size-2,
+                                        outline=self.fg_color, width=3)
+
+        # Draw the inner circle (filled when selected)
+        inner_circle = canvas.create_oval(8, 8, canvas_size-8, canvas_size-8,
+                                        fill="", outline="")
+
+        # Create the text label
+        label = tk.Label(radio_frame, text=text, bg=self.bg_color, fg=self.fg_color,
+                        font=font_manager.get_font(11),  # Smaller font size for radio button text
+                        bd=0, relief=tk.FLAT, highlightthickness=0)
+
+        # Force background color to override any theme defaults
+        label.configure(bg=self.bg_color)
+
+        label.pack(side=tk.LEFT, padx=0, pady=5)
+
+        # Determine which variable and callback to use
+        if value in ['subscription', 'api']:
+            # Claude mode radio buttons
+            var_name = 'claude_mode_var'
+            callback = self.on_claude_mode_change
+        else:
+            # Config radio buttons (zai, claude, custom)
+            var_name = 'config_var'
+            callback = self.on_config_change
+
+        # Store radio button info
+        self.custom_radio_buttons[value] = {
+            'canvas': canvas,
+            'outer_circle': outer_circle,
+            'inner_circle': inner_circle,
+            'label': label,
+            'selected': False,
+            'var_name': var_name,
+            'callback': callback
+        }
+
+        # Bind click events
+        for widget in [canvas, label, radio_frame]:
+            widget.bind('<Button-1>', lambda e, val=value: self.on_custom_radio_click(val))
+            widget.bind('<Enter>', lambda e, val=value: self.on_custom_radio_hover(val, True))
+            widget.bind('<Leave>', lambda e, val=value: self.on_custom_radio_hover(val, False))
+
+        # Set initial selection if this is the default value
+        variable = getattr(self, var_name)
+        if variable.get() == value:
+            self.update_custom_radio_display(value, True)
+
+    def on_custom_radio_click(self, value):
+        """Handle custom radio button click"""
+        if value not in self.custom_radio_buttons:
+            return
+
+        radio_info = self.custom_radio_buttons[value]
+        var_name = radio_info['var_name']
+        callback = radio_info['callback']
+
+        # Update the appropriate variable
+        variable = getattr(self, var_name)
+        variable.set(value)
+
+        # Update all radio button displays
+        for radio_value in self.custom_radio_buttons:
+            self.update_custom_radio_display(radio_value, radio_value == value)
+
+        # Trigger the appropriate callback
+        callback()
+
+    def update_custom_radio_display(self, value, is_selected):
+        """Update the visual display of a custom radio button"""
+        if value not in self.custom_radio_buttons:
+            return
+
+        radio_info = self.custom_radio_buttons[value]
+        radio_info['selected'] = is_selected
+
+        canvas = radio_info['canvas']
+        inner_circle = radio_info['inner_circle']
+
+        if is_selected:
+            # Fill the inner circle and change text color
+            canvas.itemconfig(inner_circle, fill=self.accent_color)
+            canvas.itemconfig(radio_info['outer_circle'], outline=self.accent_color)
+            radio_info['label'].config(fg=self.accent_color)
+        else:
+            # Clear the inner circle and reset text color
+            canvas.itemconfig(inner_circle, fill="")
+            canvas.itemconfig(radio_info['outer_circle'], outline=self.fg_color)
+            radio_info['label'].config(fg=self.fg_color)
+
+    def on_custom_radio_hover(self, value, is_hovering):
+        """Handle hover effect for custom radio buttons"""
+        if value not in self.custom_radio_buttons:
+            return
+
+        radio_info = self.custom_radio_buttons[value]
+        canvas = radio_info['canvas']
+
+        if not radio_info['selected']:  # Only apply hover if not selected
+            if is_hovering:
+                canvas.itemconfig(radio_info['outer_circle'], outline=self.accent_color)
+            else:
+                canvas.itemconfig(radio_info['outer_circle'], outline=self.fg_color)
+
     def on_entry_click(self, event):
         """Handle entry field click to ensure proper focus on Linux"""
         widget = event.widget
@@ -619,8 +781,12 @@ class ClaudeConfigSwitcher:
 
         # Combobox for selecting existing keys
         self.zai_key_var = tk.StringVar()
+        if IS_LINUX:
+            combobox_width = 32  # Make it larger on Linux for better visibility
+        else:
+            combobox_width = 40
         self.zai_key_combo = ttk.Combobox(key_management_frame, textvariable=self.zai_key_var,
-                                          state="readonly", width=40)
+                                          state="readonly", width=combobox_width)
         self.zai_key_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
         self.zai_key_combo.bind('<<ComboboxSelected>>', self.on_zai_key_selected)
 
@@ -710,7 +876,7 @@ class ClaudeConfigSwitcher:
 
         # Environment variables title
         env_title = tk.Label(zai_env_container, text="Environment Variables Set:",
-                            bg=self.entry_bg, fg="#cccccc",
+                            bg=self.bg_color, fg="#cccccc",
                             font=font_manager.get_font(11, 'bold'), anchor=tk.W)
         env_title.grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 8))
 
@@ -748,8 +914,69 @@ class ClaudeConfigSwitcher:
                             bg=self.entry_bg, fg="#888888",
                             font=font_manager.get_font(8, "italic"), anchor=tk.W)
         note_label.grid(row=len(zai_env_vars) + 1, column=0, columnspan=2, sticky=tk.W, pady=(8, 0))
-    
-        
+
+    def create_claude_frame(self):
+        """Create Claude configuration frame"""
+        self.claude_frame = tk.LabelFrame(self.dynamic_config_container, text="", bg=self.entry_bg,
+                                     fg=self.fg_color, relief=tk.FLAT, bd=2)
+
+        self.claude_mode_var = tk.StringVar(value="subscription")
+
+        if IS_LINUX:
+            # Create custom radio buttons for Linux for Claude mode selection
+            self.create_custom_radio_button(self.claude_frame, "Use Claude Subscription (Pro/Team/Enterprise)", "subscription")
+            self.create_custom_radio_button(self.claude_frame, "Use Claude API Key", "api")
+        else:
+            # Use standard ttk radio buttons for other platforms
+            subscription_radio = ttk.Radiobutton(self.claude_frame, text="Use Claude Subscription (Pro/Team/Enterprise)",
+                                                variable=self.claude_mode_var, value="subscription",
+                                                command=self.on_claude_mode_change, style='TRadiobutton')
+            subscription_radio.pack(anchor=tk.W, padx=15, pady=(10, 5))
+
+            api_radio = ttk.Radiobutton(self.claude_frame, text="Use Claude API Key",
+                                        variable=self.claude_mode_var, value="api",
+                                        command=self.on_claude_mode_change, style='TRadiobutton')
+            api_radio.pack(anchor=tk.W, padx=15, pady=(0, 5))
+
+        claude_key_label = ttk.Label(self.claude_frame, text="Claude API Key:")
+        claude_key_label.pack(anchor=tk.W, padx=15, pady=(5, 2))
+
+        self.claude_key_entry = tk.Entry(self.claude_frame, bg=self.entry_bg, fg=self.fg_color,
+                                         insertbackground=self.fg_color, relief=tk.FLAT,
+                                         font=font_manager.get_font(10), bd=0, show="*", state=tk.DISABLED,
+                                         disabledbackground=self.entry_bg, disabledforeground="#888888")
+        self.claude_key_entry.pack(fill=tk.X, padx=15, pady=(0, 2), ipady=8)
+
+        # Bind focus events for proper input handling
+        self.claude_key_entry.bind('<Button-1>', self.on_entry_click)
+        self.claude_key_entry.bind('<KeyRelease>', lambda e: self.save_api_keys())
+
+        # Add border to entry
+        claude_entry_border = tk.Frame(self.claude_frame, bg=self.accent_color, height=2)
+        claude_entry_border.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Initialize custom radio button display for Linux
+        if IS_LINUX:
+            self.root.after(100, self.update_claude_radio_display)
+
+    def update_claude_radio_display(self):
+        """Update Claude radio button display for Linux"""
+        if IS_LINUX and hasattr(self, 'custom_radio_buttons'):
+            # Set initial selection for subscription mode
+            if self.claude_mode_var.get() == "subscription":
+                self.update_custom_radio_display("subscription", True)
+                self.update_custom_radio_display("api", False)
+            else:
+                self.update_custom_radio_display("subscription", False)
+                self.update_custom_radio_display("api", True)
+
+    def on_claude_mode_change(self):
+        """Handle Claude mode radio button change"""
+        if self.claude_mode_var.get() == "api":
+            self.claude_key_entry.configure(state=tk.NORMAL)
+        else:
+            self.claude_key_entry.configure(state=tk.DISABLED)
+
     def create_custom_frame(self):
         """Create Custom configuration frame"""
         self.custom_frame = tk.LabelFrame(self.dynamic_config_container, text="", bg=self.entry_bg,
@@ -807,7 +1034,7 @@ class ClaudeConfigSwitcher:
 
         # Environment variables title
         env_title = tk.Label(custom_env_container, text="Environment Variables Set:",
-                            bg=self.entry_bg, fg="#cccccc",
+                            bg=self.bg_color, fg="#cccccc",
                             font=font_manager.get_font(11, 'bold'), anchor=tk.W)
         env_title.grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 8))
 
@@ -863,6 +1090,12 @@ class ClaudeConfigSwitcher:
                 if not self.zai_key_entry.get().strip():
                     self.zai_key_entry.delete(0, tk.END)
                     self.zai_key_entry.insert(0, user_auth_token)
+
+            # Pre-fill Claude API key only if auth token is set but no base URL (indicating API mode)
+            elif user_auth_token and not user_base_url:
+                if not self.claude_key_entry.get().strip():
+                    self.claude_key_entry.delete(0, tk.END)
+                    self.claude_key_entry.insert(0, user_auth_token)
 
             # Pre-fill custom configuration only if both auth token and base URL are set and it's not z.ai
             elif user_auth_token and user_base_url and user_base_url.strip() and 'z.ai' not in user_base_url:
@@ -1022,25 +1255,122 @@ class ClaudeConfigSwitcher:
         try:
             # Ensure .claude directory exists
             self.claude_settings_dir.mkdir(exist_ok=True)
-            
+
             # Read current settings
             current_settings = self.get_claude_settings()
-            
+
             # Update or add environment variables
             if 'env' not in current_settings:
                 current_settings['env'] = {}
-            
+
             for var_name, var_value in env_vars.items():
                 current_settings['env'][var_name] = var_value
-            
+
             # Write back to file with proper formatting
             with open(self.claude_settings_file, 'w', encoding='utf-8') as f:
                 json.dump(current_settings, f, indent=4, ensure_ascii=False)
-            
+
             return True, f"Claude Code settings updated successfully"
-            
+
         except Exception as e:
             return False, f"Failed to update Claude settings: {str(e)}"
+
+    def remove_claude_settings_vars(self, var_names):
+        """Remove specific environment variables from Claude Code settings.json"""
+        try:
+            # Read current settings
+            current_settings = self.get_claude_settings()
+
+            # Check if there are environment variables to remove
+            if 'env' not in current_settings:
+                return True, "No environment variables in Claude settings to remove"
+
+            # Remove specified variables
+            removed_vars = []
+            for var_name in var_names:
+                if var_name in current_settings['env']:
+                    del current_settings['env'][var_name]
+                    removed_vars.append(var_name)
+
+            # If no variables were removed, return early
+            if not removed_vars:
+                return True, "No matching environment variables found in Claude settings"
+
+            # Write updated settings back to file
+            with open(self.claude_settings_file, 'w', encoding='utf-8') as f:
+                json.dump(current_settings, f, indent=4, ensure_ascii=False)
+
+            return True, f"Removed {', '.join(removed_vars)} from Claude Code settings"
+
+        except Exception as e:
+            return False, f"Failed to remove from Claude settings: {str(e)}"
+
+    def remove_user_env_var(self, var_name):
+        """Remove user-level environment variable based on platform"""
+        try:
+            # Also clear from current process environment
+            if var_name in os.environ:
+                del os.environ[var_name]
+                print(f"Cleanup: Cleared {var_name} from current process environment")
+
+            if IS_WINDOWS:
+                # Use PowerShell to remove environment variable
+                command = f"[System.Environment]::SetEnvironmentVariable('{var_name}', '', 'User')"
+                result = subprocess.run(['powershell', '-Command', command],
+                                      capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    return True, f"Removed {var_name} from Windows environment variables"
+                else:
+                    return False, f"Failed to remove {var_name}: {result.stderr}"
+
+            elif IS_LINUX:
+                # For Linux, remove from shell configuration files
+                home_dir = Path.home()
+                config_files = [
+                    home_dir / '.bashrc',
+                    home_dir / '.profile',
+                    home_dir / '.zshrc',
+                    home_dir / '.bash_profile'
+                ]
+
+                files_modified = []
+                for config_file in config_files:
+                    try:
+                        if config_file.exists() and config_file.is_file():
+                            # Read the file
+                            with open(config_file, 'r', encoding='utf-8') as f:
+                                lines = f.readlines()
+
+                            # Filter out lines that export this variable
+                            new_lines = []
+                            removed_line = False
+                            for line in lines:
+                                stripped_line = line.strip()
+                                # Check if this line exports the target variable
+                                if stripped_line.startswith(f'export {var_name}='):
+                                    removed_line = True
+                                    # Skip this line (don't add to new_lines)
+                                    continue
+                                else:
+                                    new_lines.append(line)
+
+                            # If we removed any lines, write the file back
+                            if removed_line:
+                                with open(config_file, 'w', encoding='utf-8') as f:
+                                    f.writelines(new_lines)
+                                files_modified.append(config_file.name)
+
+                    except (PermissionError, IOError, UnicodeDecodeError) as e:
+                        print(f"Warning: Could not modify {config_file}: {e}")
+                        continue
+
+                if files_modified:
+                    return True, f"Removed {var_name} from {', '.join(files_modified)}"
+                else:
+                    return True, f"No {var_name} found in shell configuration files"
+
+        except Exception as e:
+            return False, f"Error removing environment variable {var_name}: {e}"
 
     def load_saved_api_keys(self):
         """Load API keys from the persistent storage file"""
@@ -1083,16 +1413,25 @@ class ClaudeConfigSwitcher:
                     self.on_zai_key_selected()
             
             
+    # Load Claude config
+            if 'claude_mode' in saved_keys:
+                self.claude_mode_var.set(saved_keys['claude_mode'])
+                self.on_claude_mode_change()
+
+            if 'claude_key' in saved_keys:
+                self.claude_key_entry.delete(0, tk.END)
+                self.claude_key_entry.insert(0, saved_keys['claude_key'])
+
             # Load custom config
             if 'custom_url' in saved_keys:
                 self.custom_url_entry.delete(0, tk.END)
                 self.custom_url_entry.insert(0, saved_keys['custom_url'])
-            
+
             if 'custom_key' in saved_keys:
                 self.custom_key_entry.delete(0, tk.END)
                 self.custom_key_entry.insert(0, saved_keys['custom_key'])
-            
-                        
+
+
             # Load selected config
             if 'selected_config' in saved_keys:
                 self.config_var.set(saved_keys['selected_config'])
@@ -1105,21 +1444,26 @@ class ClaudeConfigSwitcher:
         try:
             saved_keys = {}
             
-            # Save z.ai keys
+           # Save z.ai keys
             saved_keys['zai_keys'] = self.zai_keys
             saved_keys['current_zai_key_name'] = self.current_zai_key_name
-            
-            
+
+            # Save Claude config
+            saved_keys['claude_mode'] = self.claude_mode_var.get()
+            claude_key = self.claude_key_entry.get().strip()
+            if claude_key:
+                saved_keys['claude_key'] = claude_key
+
             # Save custom config if not empty
             custom_url = self.custom_url_entry.get().strip()
             if custom_url:
                 saved_keys['custom_url'] = custom_url
-            
+
             custom_key = self.custom_key_entry.get().strip()
             if custom_key:
                 saved_keys['custom_key'] = custom_key
-            
-                        
+
+
             # Save selected config
             saved_keys['selected_config'] = self.config_var.get()
             
@@ -1206,10 +1550,13 @@ class ClaudeConfigSwitcher:
         # Remove existing buttons if any
         if hasattr(self, 'confirm_button_frame'):
             self.confirm_button_frame.destroy()
-        
+
         # Create button frame
         self.confirm_button_frame = tk.Frame(self.message_frame, bg=self.entry_bg)
         self.confirm_button_frame.pack(pady=(5, 0))
+
+        # Adjust window height to accommodate confirmation buttons
+        self._adjust_window_height_for_confirmation()
         
         # Yes button
         yes_btn = tk.Button(self.confirm_button_frame, text="Yes", bg=self.button_bg, fg=self.fg_color,
@@ -1246,6 +1593,9 @@ class ClaudeConfigSwitcher:
             self.zai_key_name_entry.delete(0, tk.END)
             self.current_zai_key_name = None
 
+        # Clean up environment variables and Claude Code settings
+        self._cleanup_api_key_configuration()
+
         # Update combobox
         self.update_zai_key_combo()
 
@@ -1254,6 +1604,37 @@ class ClaudeConfigSwitcher:
 
         # Show success message
         self.show_inline_message(f"Z.ai key '{selected_name}' deleted successfully!", "success")
+
+    def _cleanup_api_key_configuration(self):
+        """Clean up API key configuration from environment variables and settings"""
+        try:
+            # All ANTHROPIC-related variables that might be set
+            cleanup_vars = [
+                'ANTHROPIC_AUTH_TOKEN',
+                'ANTHROPIC_BASE_URL',
+                'ANTHROPIC_DEFAULT_OPUS_MODEL',
+                'ANTHROPIC_DEFAULT_SONNET_MODEL',
+                'ANTHROPIC_DEFAULT_HAIKU_MODEL',
+                'ANTHROPIC_API_KEY'
+            ]
+
+            # Remove from Claude Code settings (highest priority cleanup)
+            success, message = self.remove_claude_settings_vars(cleanup_vars)
+            if success:
+                print(f"Cleanup: {message}")
+            else:
+                print(f"Cleanup warning: {message}")
+
+            # Remove from shell environment variables
+            for var_name in cleanup_vars:
+                success, message = self.remove_user_env_var(var_name)
+                if success:
+                    print(f"Cleanup: {message}")
+                else:
+                    print(f"Cleanup warning: {message}")
+
+        except Exception as e:
+            print(f"Error during API key cleanup: {e}")
 
     def show_inline_message(self, message, message_type="info"):
         """Show an inline message in the UI"""
@@ -1287,9 +1668,103 @@ class ClaudeConfigSwitcher:
         if hasattr(self, 'confirm_button_frame'):
             self.confirm_button_frame.destroy()
             delattr(self, 'confirm_button_frame')
-        
+
+        # Restore original window height if it was increased for confirmation
+        self._restore_original_window_height()
+
         # Hide message frame
         self.message_frame.pack_forget()
+
+    def _adjust_window_height_for_confirmation(self):
+        """Increase window height to accommodate confirmation buttons"""
+        try:
+            # Store original geometry if not already stored
+            if not hasattr(self, 'original_geometry'):
+                self.original_geometry = self.root.geometry()
+
+            # Get current window dimensions
+            current_geometry = self.root.geometry()
+            current_width, current_height = map(int, current_geometry.split('+')[0].split('x'))
+            x, y = map(int, current_geometry.split('+')[1:3])
+
+            # Add extra height for confirmation buttons (approximately 60 pixels)
+            extra_height = 60
+            new_height = current_height + extra_height
+
+            # Check if we're exceeding screen height
+            screen_height = self.root.winfo_screenheight()
+            max_height = screen_height - 100  # Leave some margin
+
+            if new_height > max_height:
+                new_height = max_height
+
+            # Apply new geometry
+            self.root.geometry(f'{current_width}x{new_height}+{x}+{y}')
+
+            # Ensure the window is fully visible
+            if y + new_height > screen_height - 50:
+                y = screen_height - new_height - 50
+                self.root.geometry(f'{current_width}x{new_height}+{x}+{y}')
+
+        except Exception as e:
+            print(f"Warning: Could not adjust window height for confirmation: {e}")
+
+    def _restore_original_window_height(self):
+        """Restore the original window height after confirmation is hidden"""
+        try:
+            if hasattr(self, 'original_geometry'):
+                # Restore original geometry
+                self.root.geometry(self.original_geometry)
+                # Remove the stored geometry
+                delattr(self, 'original_geometry')
+        except Exception as e:
+            print(f"Warning: Could not restore original window height: {e}")
+
+    def _adjust_window_height_for_env_vars(self):
+        """Increase window size to accommodate environment variables display"""
+        try:
+            # Store original geometry if not already stored
+            if not hasattr(self, 'original_geometry'):
+                self.original_geometry = self.root.geometry()
+
+            # Get current window dimensions
+            current_geometry = self.root.geometry()
+            current_width, current_height = map(int, current_geometry.split('+')[0].split('x'))
+            x, y = map(int, current_geometry.split('+')[1:3])
+
+            # Add extra height for environment variables (approximately 200 pixels)
+            extra_height = 200
+            new_height = current_height + extra_height
+
+            # Add extra width to prevent text cutoff (approximately 250 pixels for better visibility)
+            extra_width = 250
+            new_width = current_width + extra_width
+
+            # Check if we're exceeding screen dimensions
+            screen_height = self.root.winfo_screenheight()
+            screen_width = self.root.winfo_screenwidth()
+            max_height = screen_height - 100  # Leave some margin
+            max_width = screen_width - 100  # Leave some margin
+
+            if new_height > max_height:
+                new_height = max_height
+
+            if new_width > max_width:
+                new_width = max_width
+
+            # Apply new geometry
+            self.root.geometry(f'{new_width}x{new_height}+{x}+{y}')
+
+            # Ensure the window is fully visible
+            if y + new_height > screen_height - 50:
+                y = screen_height - new_height - 50
+            if x + new_width > screen_width - 50:
+                x = screen_width - new_width - 50
+
+            self.root.geometry(f'{new_width}x{new_height}+{x}+{y}')
+
+        except Exception as e:
+            print(f"Warning: Could not adjust window size for environment variables: {e}")
 
     def show_non_modal_confirmation(self, title, message, on_yes_callback):
         """Show a non-modal confirmation dialog that works better on Linux"""
@@ -1387,6 +1862,85 @@ class ClaudeConfigSwitcher:
             self.show_inline_message(message, "error")
         else:
             messagebox.showerror(title, message, parent=self.root)
+
+    def show_success_dialog(self, title, message):
+        """Show a custom success dialog with proper formatting for Linux"""
+        if IS_LINUX:
+            dialog = tk.Toplevel(self.root)
+            dialog.title(title)
+            # Make dialog significantly larger to account for window decorations
+            dialog.geometry("550x420")
+            dialog.resizable(False, False)
+
+            # Make dialog transient and grab focus
+            dialog.transient(self.root)
+            dialog.grab_set()
+
+            # Style the dialog to match the main app
+            dialog.configure(bg=self.bg_color)
+
+            # Center the dialog relative to the main window
+            self.root.update_idletasks()
+            main_x = self.root.winfo_x()
+            main_y = self.root.winfo_y()
+            main_width = self.root.winfo_width()
+            main_height = self.root.winfo_height()
+
+            dialog_x = main_x + (main_width // 2) - 275
+            dialog_y = main_y + (main_height // 2) - 210
+
+            dialog.geometry(f"+{dialog_x}+{dialog_y}")
+
+            # Multiple approaches to ensure dialog visibility on Linux
+            try:
+                dialog.attributes('-type', 'dialog')
+            except:
+                pass
+
+            dialog.lift()
+            dialog.attributes('-topmost', True)
+            dialog.focus_set()
+            dialog.focus_force()
+            dialog.deiconify()
+            dialog.update()
+
+            dialog.after(50, lambda: dialog.lift())
+            dialog.after(100, lambda: dialog.focus_force())
+            dialog.after(200, lambda: dialog.attributes('-topmost', False))
+
+            # Main container with generous padding to ensure content fits
+            main_container = tk.Frame(dialog, bg=self.bg_color)
+            main_container.pack(fill=tk.BOTH, expand=True, padx=35, pady=35)
+
+            # Success icon
+            icon_label = tk.Label(main_container, text="✓", bg=self.bg_color, fg=self.success_color,
+                                font=font_manager.get_font(26, 'bold'))
+            icon_label.pack(pady=(0, 18))
+
+            # Message label with proper wrapping and better contrast
+            msg_label = tk.Label(main_container, text=message, bg=self.bg_color, fg="#ffffff",
+                               font=font_manager.get_font(10), wraplength=470, justify=tk.CENTER)
+            msg_label.pack(pady=(0, 25))
+
+            # Ensure the message is clearly visible by updating it after packing
+            msg_label.update_idletasks()
+
+            # Button frame
+            button_frame = tk.Frame(main_container, bg=self.bg_color)
+            button_frame.pack()
+
+            # OK button
+            ok_btn = tk.Button(button_frame, text="OK", bg=self.button_bg, fg=self.fg_color,
+                             font=font_manager.get_font(10, 'bold'), relief=tk.FLAT, cursor="hand2",
+                             bd=0, padx=30, pady=10, command=dialog.destroy)
+            ok_btn.pack()
+            ok_btn.bind('<Enter>', lambda e: ok_btn.configure(bg=self.button_hover))
+            ok_btn.bind('<Leave>', lambda e: ok_btn.configure(bg=self.button_bg))
+
+            # Handle window close
+            dialog.protocol("WM_DELETE_WINDOW", dialog.destroy)
+        else:
+            messagebox.showinfo(title, message, parent=self.root)
 
     def show_info_dialog(self, title, message):
         """Show a custom info dialog that works better on Linux"""
@@ -1499,11 +2053,14 @@ class ClaudeConfigSwitcher:
         """Handle configuration radio button change - switch visible frame"""
         # Hide all frames first
         self.zai_frame.pack_forget()
+        self.claude_frame.pack_forget()
         self.custom_frame.pack_forget()
 
         # Show the selected frame
         if self.config_var.get() == "zai":
             self.zai_frame.pack(fill=tk.X, pady=(0, 10))
+        elif self.config_var.get() == "claude":
+            self.claude_frame.pack(fill=tk.X, pady=(0, 10))
         elif self.config_var.get() == "custom":
             self.custom_frame.pack(fill=tk.X, pady=(0, 10))
 
@@ -1517,9 +2074,11 @@ class ClaudeConfigSwitcher:
         """Toggle password visibility in entry fields"""
         if self.show_password_var.get():
             self.zai_key_entry.configure(show="")
+            self.claude_key_entry.configure(show="")
             self.custom_key_entry.configure(show="")
         else:
             self.zai_key_entry.configure(show="*")
+            self.claude_key_entry.configure(show="*")
             self.custom_key_entry.configure(show="*")
 
     def hide_env_vars(self, config_type):
@@ -1532,6 +2091,8 @@ class ClaudeConfigSwitcher:
         # Also uncheck the main checkbox if all env vars are hidden
         if not self.zai_env_frame.winfo_ismapped() and not self.custom_env_frame.winfo_ismapped():
             self.show_env_vars_var.set(False)
+            # Restore original window height when all env vars are hidden
+            self._restore_original_window_height()
 
     def toggle_env_vars_visibility(self):
         """Toggle environment variables display visibility"""
@@ -1544,10 +2105,16 @@ class ClaudeConfigSwitcher:
 
             # Update the display with current system values
             self.root.after(100, self.update_env_vars_display)  # Small delay to ensure widgets are visible
+
+            # Adjust window height to accommodate environment variables
+            self.root.after(200, self._adjust_window_height_for_env_vars)  # Allow widgets to render first
         else:
             # Hide all environment variable frames
             self.zai_env_frame.pack_forget()
             self.custom_env_frame.pack_forget()
+
+            # Restore original window height
+            self._restore_original_window_height()
 
     def get_current_env_vars(self):
         """Get current environment variables from the system"""
@@ -1651,6 +2218,14 @@ class ClaudeConfigSwitcher:
                 status_text = "✓ Currently using z.ai API\n"
                 status_text += f"(Configured in Claude Code settings.json)" if claude_settings.get('env') else f"(Configured via environment variables)"
                 self.status_label.configure(text=status_text, fg=self.success_color)
+            elif claude_auth_token and not claude_base_url:
+                status_text = "✓ Currently using Claude API Key\n"
+                status_text += f"(Configured in Claude Code settings.json)" if claude_settings.get('env') else f"(Configured via environment variables)"
+                self.status_label.configure(text=status_text, fg=self.success_color)
+            elif not claude_auth_token and not claude_base_url:
+                status_text = "✓ Currently using Claude Subscription\n"
+                status_text += "(No environment variables configured)"
+                self.status_label.configure(text=status_text, fg=self.success_color)
             elif claude_base_url and claude_auth_token:
                 status_text = f"✓ Currently using Custom Base URL\n"
                 status_text += f"Base URL: {claude_base_url}\n"
@@ -1723,8 +2298,76 @@ class ClaudeConfigSwitcher:
                 else:
                     restart_message += "If using terminal only, close and reopen the terminal."
 
-                self.root.after(0, lambda: messagebox.showinfo("Success",
+                self.root.after(0, lambda: self.show_success_dialog("Success",
                                    f"Z.ai configuration applied successfully!\n\nEnvironment variables and Claude Code settings.json updated.\n\n{restart_message}"))
+
+            elif self.config_var.get() == "claude":
+                # Apply Claude configuration
+                if self.claude_mode_var.get() == "subscription":
+                    # Remove all environment variables to use subscription
+                    env_vars_to_remove = [
+                        'ANTHROPIC_AUTH_TOKEN',
+                        'ANTHROPIC_BASE_URL',
+                        'ANTHROPIC_DEFAULT_OPUS_MODEL',
+                        'ANTHROPIC_DEFAULT_SONNET_MODEL',
+                        'ANTHROPIC_DEFAULT_HAIKU_MODEL',
+                        'ANTHROPIC_API_KEY'
+                    ]
+
+                    for var_name in env_vars_to_remove:
+                        success, output = self.set_user_env_var(var_name, '')
+                        if not success:
+                            self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to remove environment variable:\n{msg}"))
+                            self.root.after(0, self.hide_loading)
+                            return
+
+                    # Also clear from Claude Code settings
+                    success, output = self.update_claude_settings({var: '' for var in env_vars_to_remove})
+                    if not success:
+                        self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to update Claude Code settings:\n{msg}"))
+                        self.root.after(0, self.hide_loading)
+                        return
+
+                    self.root.after(0, lambda: self.show_success_dialog("Success",
+                                       "Claude Subscription configuration applied successfully!\n\nAll environment variables removed to use your official Claude subscription.\n\nIMPORTANT: You must close and reopen VS Code or any application using Claude Code for changes to take effect."))
+
+                else:
+                    # API mode
+                    claude_key = self.claude_key_entry.get().strip()
+
+                    if not claude_key:
+                        self.root.after(0, lambda: messagebox.showerror("Error", "Please enter your Claude API key"))
+                        self.root.after(0, self.hide_loading)
+                        return
+
+                    # Set Claude API environment variables
+                    env_vars = [
+                        ('ANTHROPIC_AUTH_TOKEN', claude_key)
+                    ]
+
+                    for var_name, var_value in env_vars:
+                        success, output = self.set_user_env_var(var_name, var_value)
+                        if not success:
+                            self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to set environment variable:\n{msg}"))
+                            self.root.after(0, self.hide_loading)
+                            return
+
+                    # Update Claude Code settings
+                    env_dict = {var_name: var_value for var_name, var_value in env_vars}
+                    success, output = self.update_claude_settings(env_dict)
+                    if not success:
+                        self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to update Claude Code settings:\n{msg}"))
+                        self.root.after(0, self.hide_loading)
+                        return
+
+                    restart_message = "IMPORTANT: You must close and reopen VS Code or any application using Claude Code for changes to take effect.\n"
+                    if IS_LINUX:
+                        restart_message += "You may also need to run 'source ~/.bashrc' or restart your terminal."
+                    else:
+                        restart_message += "If using terminal only, close and reopen the terminal."
+
+                    self.root.after(0, lambda: self.show_success_dialog("Success",
+                                       f"Claude API configuration applied successfully!\n\nEnvironment variables and Claude Code settings.json updated.\n\n{restart_message}"))
 
             elif self.config_var.get() == "custom":
                 # Apply custom configuration
@@ -1769,7 +2412,7 @@ class ClaudeConfigSwitcher:
                 else:
                     restart_message += "If using terminal only, close and reopen the terminal."
 
-                self.root.after(0, lambda: messagebox.showinfo("Success",
+                self.root.after(0, lambda: self.show_success_dialog("Success",
                                    f"Custom configuration applied successfully!\n\nEnvironment variables and Claude Code settings.json updated.\n\n{restart_message}"))
 
 

@@ -21,8 +21,6 @@ try:
     WIN32_AVAILABLE = True
 except ImportError:
     WIN32_AVAILABLE = False
-    if IS_WINDOWS:
-        print("Warning: pywin32 not available. Some window styling features may not work.")
 
 # Font management for Poppins
 class FontManager:
@@ -72,8 +70,7 @@ class FontManager:
                     self.available_font = font
                     return self.available_font
 
-        except Exception as e:
-            print(f"Font detection error: {e}")
+        except Exception:
             pass
         finally:
             self._font_detection_attempted = True
@@ -122,12 +119,8 @@ class ClaudeConfigSwitcher:
             self.root.resizable(False, False)
 
         # Remove window decorations and create custom title bar
-        # On Linux, be more conservative with window decorations
-        if IS_LINUX:
-            # Keep decorations on Linux to avoid focus issues
-            self.root.overrideredirect(False)
-        else:
-            self.root.overrideredirect(True)
+        # Hide native menu bar on both Windows and Linux
+        self.root.overrideredirect(True)
 
         # Variables for window dragging
         self.start_x = None
@@ -190,11 +183,14 @@ class ClaudeConfigSwitcher:
                            fieldbackground=self.entry_bg,
                            background=self.entry_bg,
                            foreground=self.fg_color,
-                           arrowsize=18,  # Larger arrow
-                           padding=(6, 3))
+                           arrowsize=25,  # Much larger arrow for better visibility
+                           padding=(8, 4),  # More padding
+                           borderwidth=1,
+                           relief="solid")
             style.map('TCombobox',
-                     background=[('readonly', self.entry_bg), ('active', "#4a4a4a")],
-                     fieldbackground=[('readonly', self.entry_bg)])
+                     background=[('readonly', self.entry_bg), ('active', "#5a5a5a")],
+                     fieldbackground=[('readonly', self.entry_bg)],
+                     arrowcolor=[('readonly', self.fg_color), ('active', "#ffffff")])
 
             # Linux-specific checkbox styling for better visibility
             style.configure('TCheckbutton', background=self.bg_color, foreground=self.fg_color,
@@ -238,8 +234,8 @@ class ClaudeConfigSwitcher:
                     # DWM might not be available, continue without shadow
                     pass
 
-            except Exception as e:
-                print(f"Could not set window style: {e}")
+            except Exception:
+                pass
         elif IS_LINUX:
             # On Linux, be more careful with window decorations to avoid display issues
             try:
@@ -259,11 +255,11 @@ class ClaudeConfigSwitcher:
                         self.root.attributes('-toolpalette', True)
                     except:
                         pass
-            except Exception as e:
-                print(f"Linux window styling limited: {e}")
+            except Exception:
+                pass
         else:
             # For other platforms, just use basic borderless mode
-            print(f"Using basic window styling for {platform.system()}")
+            pass
 
     def start_move(self, event):
         """Start moving the window"""
@@ -290,8 +286,8 @@ class ClaudeConfigSwitcher:
 
             # Schedule the restore notification to run after the window is hidden
             self.root.after(200, self._show_minimize_notification)
-        except Exception as e:
-            print(f"Minimize error: {e}")
+        except Exception:
+            pass
             # Fallback: try to at least hide the window
             try:
                 self.root.withdraw()
@@ -345,8 +341,8 @@ class ClaudeConfigSwitcher:
             # Handle window close
             self.restore_dialog.protocol("WM_DELETE_WINDOW", self._restore_from_notification)
 
-        except Exception as e:
-            print(f"Restore dialog error: {e}")
+        except Exception:
+            pass
             # If dialog creation fails, just restore the main window
             self._restore_main_window()
 
@@ -360,8 +356,8 @@ class ClaudeConfigSwitcher:
 
             # Restore the main window
             self._restore_main_window()
-        except Exception as e:
-            print(f"Restore error: {e}")
+        except Exception:
+            pass
             self._restore_main_window()
 
     def _restore_main_window(self):
@@ -370,26 +366,37 @@ class ClaudeConfigSwitcher:
             self.root.deiconify()
             self.root.lift()
             self.root.focus_force()
-        except Exception as e:
-            print(f"Main window restore error: {e}")
+        except Exception:
+            pass
 
     def close_window(self):
         """Close the window"""
         self.close_application()
         
     def create_widgets(self):
-        # Custom title bar
-        title_bar = tk.Frame(self.root, bg=self.bg_color, relief=tk.RAISED, bd=0, height=30)
+        # Custom title bar with built-in top padding
+        title_bar = tk.Frame(self.root, bg=self.bg_color, relief=tk.RAISED, bd=0)
         title_bar.pack(fill=tk.X, side=tk.TOP)
-        title_bar.pack_propagate(False)
 
-        # Bind mouse events for window dragging
+        # Add invisible top padding label to force height
+        top_pad = tk.Label(title_bar, bg=self.bg_color, height=1, text="")
+        top_pad.pack(fill=tk.X, side=tk.TOP)
+
+        # Main title content frame
+        title_content = tk.Frame(title_bar, bg=self.bg_color, height=30)
+        title_content.pack(fill=tk.X, side=tk.TOP)
+        title_content.pack_propagate(False)
+
+        # Bind mouse events for window dragging on the entire title bar
         title_bar.bind('<Button-1>', self.start_move)
         title_bar.bind('<B1-Motion>', self.on_move)
         title_bar.bind('<ButtonRelease-1>', self.stop_move)
+        title_content.bind('<Button-1>', self.start_move)
+        title_content.bind('<B1-Motion>', self.on_move)
+        title_content.bind('<ButtonRelease-1>', self.stop_move)
 
         # Title text
-        title_frame = tk.Frame(title_bar, bg=self.bg_color)
+        title_frame = tk.Frame(title_content, bg=self.bg_color)
         title_frame.pack(side=tk.LEFT, padx=10, pady=5)
 
         claude_code_label = tk.Label(title_frame, text="Claude Code", bg=self.bg_color, fg="#FF8C00",
@@ -401,7 +408,7 @@ class ClaudeConfigSwitcher:
         ez_switch_label.pack(side=tk.LEFT)
 
         # Window controls container
-        controls_frame = tk.Frame(title_bar, bg=self.bg_color)
+        controls_frame = tk.Frame(title_content, bg=self.bg_color)
         controls_frame.pack(side=tk.RIGHT, padx=5, pady=2)
 
   
@@ -433,46 +440,46 @@ class ClaudeConfigSwitcher:
                                       bd=0, width=2, height=1, command=self.hide_message)
         self.message_close_btn.place(relx=0.98, rely=0.02, anchor='ne')
         
-        # Light image container with light background
-        try:
-            # Load and resize the light image
-            light_image = Image.open("images/light.png")
-            # Make it larger (64x64 pixels)
-            light_image = light_image.resize((64, 64), Image.Resampling.LANCZOS)
-            self.light_photo = ImageTk.PhotoImage(light_image)
-            
-            # Create a frame with light background for the image
-            image_container = tk.Frame(content_frame, bg="#f0f0f0", relief=tk.RAISED, bd=1)
-            image_container.pack(pady=(0, 15))
-            
-            # Add some padding inside the container
-            inner_frame = tk.Frame(image_container, bg="#f0f0f0", padx=8, pady=8)
-            inner_frame.pack()
-            
-            # Create the image label
-            light_label = tk.Label(inner_frame, image=self.light_photo, bg="#f0f0f0")
-            light_label.pack()
-            
-        except Exception as e:
-            # If image loading fails, continue without it
-            print(f"Could not load light image: {e}")
-        
-        # Title
-        title_frame = tk.Frame(content_frame, bg=self.bg_color)
-        title_frame.pack(pady=(0, 5))
+        # Modern Logo Container
+        logo_container = tk.Frame(content_frame, bg=self.bg_color)
+        logo_container.pack(pady=(20, 15))
 
-        claude_code_label = tk.Label(title_frame, text="Claude Code", bg=self.bg_color, fg="#FF8C00",
-                                   font=font_manager.get_font(22, 'bold'))
+        # Logo frame with styling
+        logo_frame = tk.Frame(logo_container, bg=self.bg_color)
+        logo_frame.pack()
+
+        # Orange code symbol
+        code_symbol = tk.Label(logo_frame, text="</>", bg=self.bg_color, fg="#FF8C00",
+                             font=font_manager.get_font(28, 'bold'))
+        code_symbol.pack(side=tk.LEFT, padx=(0, 8))
+
+        claude_code_label = tk.Label(logo_frame, text="Claude Code", bg=self.bg_color, fg="#FF8C00",
+                                   font=font_manager.get_font(28, 'bold'))
         claude_code_label.pack(side=tk.LEFT)
 
-        ez_switch_label = tk.Label(title_frame, text=" EZ Switch", bg=self.bg_color, fg=self.fg_color,
-                                 font=font_manager.get_font(22, 'bold'))
+        ez_switch_label = tk.Label(logo_frame, text=" EZ Switch", bg=self.bg_color, fg=self.fg_color,
+                                 font=font_manager.get_font(28, 'bold'))
         ez_switch_label.pack(side=tk.LEFT)
-        
-        subtitle_label = ttk.Label(content_frame,
+
+        # Modern separation line
+        separator_frame = tk.Frame(logo_container, bg=self.bg_color)
+        separator_frame.pack(pady=(8, 5))
+
+        # Create gradient effect with multiple lines
+        separator_top = tk.Frame(separator_frame, bg="#FF8C00", height=2)
+        separator_top.pack(fill=tk.X, padx=50)
+
+        separator_middle = tk.Frame(separator_frame, bg="#FFA500", height=1)
+        separator_middle.pack(fill=tk.X, padx=70, pady=1)
+
+        separator_bottom = tk.Frame(separator_frame, bg="#FFB84D", height=1)
+        separator_bottom.pack(fill=tk.X, padx=90)
+
+        # Subtitle with modern styling
+        subtitle_label = ttk.Label(logo_container,
                                    text="Switch between z.ai and custom configurations",
                                    style='Subtitle.TLabel')
-        subtitle_label.pack(pady=(0, 15))
+        subtitle_label.pack(pady=(5, 0))
         
         # Current Status Frame
         status_frame = tk.Frame(content_frame, bg=self.entry_bg, relief=tk.FLAT, bd=0)
@@ -582,38 +589,35 @@ class ClaudeConfigSwitcher:
         # Apply Configuration Button (spans 2 columns)
         self.apply_button = tk.Button(button_container, text="Apply Configuration",
                                       bg=self.button_bg, fg=self.fg_color,
+                                      activebackground=self.button_bg, activeforeground=self.fg_color,
                                       font=font_manager.get_font(11, 'bold'), relief=tk.FLAT,
                                       cursor="hand2", bd=0, pady=12,
                                       command=self.apply_configuration)
         self.apply_button.grid(row=0, column=0, columnspan=2, sticky="ew", padx=(0, 5), pady=(0, 8))
         
-        # Bind hover effects
-        self.apply_button.bind('<Enter>', lambda e: self.apply_button.configure(bg=self.button_hover))
-        self.apply_button.bind('<Leave>', lambda e: self.apply_button.configure(bg=self.button_bg))
+        # Hover effects removed
         
         # Refresh Status Button
         self.refresh_button = tk.Button(button_container, text="Refresh",
                                        bg=self.refresh_button_bg, fg=self.fg_color,
+                                       activebackground=self.refresh_button_bg, activeforeground=self.fg_color,
                                        font=font_manager.get_font(10, 'bold'), relief=tk.FLAT,
                                        cursor="hand2", bd=0, pady=12,
                                        command=self.check_current_status)
         self.refresh_button.grid(row=0, column=2, sticky="ew", padx=(5, 0), pady=(0, 8))
         
-        # Bind hover effects
-        self.refresh_button.bind('<Enter>', lambda e: self.refresh_button.configure(bg=self.refresh_button_hover))
-        self.refresh_button.bind('<Leave>', lambda e: self.refresh_button.configure(bg=self.refresh_button_bg))
+        # Hover effects removed
         
         # Close Button (spans all columns)
         self.close_button = tk.Button(button_container, text="Close Application",
                                      bg=self.close_button_bg, fg=self.fg_color,
+                                     activebackground=self.close_button_bg, activeforeground=self.fg_color,
                                      font=font_manager.get_font(10), relief=tk.FLAT,
                                      cursor="hand2", bd=0, pady=10,
                                      command=self.close_application)
         self.close_button.grid(row=1, column=0, columnspan=3, sticky="ew")
         
-        # Bind hover effects
-        self.close_button.bind('<Enter>', lambda e: self.close_button.configure(bg=self.close_button_hover))
-        self.close_button.bind('<Leave>', lambda e: self.close_button.configure(bg=self.close_button_bg))
+        # Hover effects removed
         
         # Footer
         footer_frame = tk.Frame(main_frame, bg=self.bg_color)
@@ -763,8 +767,8 @@ class ClaudeConfigSwitcher:
             if hasattr(self, 'zai_key_entry'):
                 self.root.after(500, lambda: self.zai_key_entry.focus_set())
                 
-        except Exception as e:
-            print(f"Linux focus setup error: {e}")
+        except Exception:
+            pass
     
     def create_zai_frame(self):
         """Create Z.ai configuration frame"""
@@ -795,18 +799,16 @@ class ClaudeConfigSwitcher:
         button_frame.pack(side=tk.RIGHT)
 
         add_key_btn = tk.Button(button_frame, text="+", bg=self.refresh_button_bg, fg=self.fg_color,
+                                activebackground=self.refresh_button_bg, activeforeground=self.fg_color,
                                 font=font_manager.get_font(10, 'bold'), relief=tk.FLAT, cursor="hand2",
                                 bd=0, width=3, command=self.add_zai_key)
         add_key_btn.pack(side=tk.LEFT, padx=(0, 2))
-        add_key_btn.bind('<Enter>', lambda e: add_key_btn.configure(bg=self.refresh_button_hover))
-        add_key_btn.bind('<Leave>', lambda e: add_key_btn.configure(bg=self.refresh_button_bg))
 
         delete_key_btn = tk.Button(button_frame, text="−", bg="#8b4513", fg=self.fg_color,
+                                   activebackground="#8b4513", activeforeground=self.fg_color,
                                    font=font_manager.get_font(10, 'bold'), relief=tk.FLAT, cursor="hand2",
                                    bd=0, width=3, command=self.delete_zai_key)
         delete_key_btn.pack(side=tk.LEFT)
-        delete_key_btn.bind('<Enter>', lambda e: delete_key_btn.configure(bg="#a0522d"))
-        delete_key_btn.bind('<Leave>', lambda e: delete_key_btn.configure(bg="#8b4513"))
 
         # Current key entry
         zai_key_label = ttk.Label(self.zai_frame, text="Current Z.ai API Key:")
@@ -843,12 +845,11 @@ class ClaudeConfigSwitcher:
         # Save current key button
         save_key_btn = tk.Button(self.zai_frame, text="Save Current Key",
                                 bg=self.refresh_button_bg, fg=self.fg_color,
+                                activebackground=self.refresh_button_bg, activeforeground=self.fg_color,
                                 font=font_manager.get_font(9, 'bold'), relief=tk.FLAT,
                                 cursor="hand2", bd=0, pady=8,
                                 command=self.save_current_zai_key)
         save_key_btn.pack(fill=tk.X, padx=15, pady=(0, 10))
-        save_key_btn.bind('<Enter>', lambda e: save_key_btn.configure(bg=self.refresh_button_hover))
-        save_key_btn.bind('<Leave>', lambda e: save_key_btn.configure(bg=self.refresh_button_bg))
 
         # Initialize storage for multiple keys
         self.zai_keys = {}  # Format: {"name": "key"}
@@ -1115,6 +1116,11 @@ class ClaudeConfigSwitcher:
     def get_user_env_var(self, var_name):
         """Get user-level environment variable based on platform"""
         try:
+            # First check current process environment (most reliable for what's actually available)
+            current_value = os.environ.get(var_name, '').strip()
+            if current_value:
+                return current_value
+
             if IS_WINDOWS:
                 # Use PowerShell for Windows
                 result = subprocess.run(
@@ -1151,15 +1157,13 @@ class ClaudeConfigSwitcher:
                                         elif value.startswith("'") and value.endswith("'"):
                                             value = value[1:-1]
                                         return value
-                    except (PermissionError, IOError, UnicodeDecodeError) as e:
-                        print(f"Warning: Could not read {config_file}: {e}")
+                    except (PermissionError, IOError, UnicodeDecodeError):
                         continue
 
-            # Fallback to current process environment
-            return os.environ.get(var_name, '').strip()
+            # Final fallback to empty string if nothing found
+            return ''
 
-        except Exception as e:
-            print(f"Error getting environment variable {var_name}: {e}")
+        except Exception:
             return ''
 
     def set_user_env_var(self, var_name, value):
@@ -1209,8 +1213,7 @@ class ClaudeConfigSwitcher:
                 try:
                     with open(target_file, 'r', encoding='utf-8') as f:
                         existing_lines = f.readlines()
-                except Exception as e:
-                    print(f"Warning: Could not read {target_file}: {e}")
+                except Exception:
                     existing_lines = []
                 
                 # Remove existing export for this variable (more robust matching)
@@ -1246,8 +1249,7 @@ class ClaudeConfigSwitcher:
             else:
                 # Return empty settings if file doesn't exist
                 return {}
-        except Exception as e:
-            print(f"Error reading Claude settings: {e}")
+        except Exception:
             return {}
 
     def update_claude_settings(self, env_vars):
@@ -1311,7 +1313,6 @@ class ClaudeConfigSwitcher:
             # Also clear from current process environment
             if var_name in os.environ:
                 del os.environ[var_name]
-                print(f"Cleanup: Cleared {var_name} from current process environment")
 
             if IS_WINDOWS:
                 # Use PowerShell to remove environment variable
@@ -1360,8 +1361,7 @@ class ClaudeConfigSwitcher:
                                     f.writelines(new_lines)
                                 files_modified.append(config_file.name)
 
-                    except (PermissionError, IOError, UnicodeDecodeError) as e:
-                        print(f"Warning: Could not modify {config_file}: {e}")
+                    except (PermissionError, IOError, UnicodeDecodeError):
                         continue
 
                 if files_modified:
@@ -1432,9 +1432,13 @@ class ClaudeConfigSwitcher:
                 self.custom_key_entry.insert(0, saved_keys['custom_key'])
 
 
-            # Load selected config
-            if 'selected_config' in saved_keys:
-                self.config_var.set(saved_keys['selected_config'])
+            # Always default to Z.ai configuration
+            self.config_var.set("zai")
+
+            # Update radio button display to match default config
+            if IS_LINUX and hasattr(self, 'custom_radio_buttons'):
+                for radio_value in self.custom_radio_buttons:
+                    self.update_custom_radio_display(radio_value, radio_value == "zai")
         except Exception as e:
             # Silently fail if we can't load saved keys
             pass
@@ -1619,22 +1623,14 @@ class ClaudeConfigSwitcher:
             ]
 
             # Remove from Claude Code settings (highest priority cleanup)
-            success, message = self.remove_claude_settings_vars(cleanup_vars)
-            if success:
-                print(f"Cleanup: {message}")
-            else:
-                print(f"Cleanup warning: {message}")
+            self.remove_claude_settings_vars(cleanup_vars)
 
             # Remove from shell environment variables
             for var_name in cleanup_vars:
-                success, message = self.remove_user_env_var(var_name)
-                if success:
-                    print(f"Cleanup: {message}")
-                else:
-                    print(f"Cleanup warning: {message}")
+                self.remove_user_env_var(var_name)
 
-        except Exception as e:
-            print(f"Error during API key cleanup: {e}")
+        except Exception:
+            pass
 
     def show_inline_message(self, message, message_type="info"):
         """Show an inline message in the UI"""
@@ -1706,8 +1702,8 @@ class ClaudeConfigSwitcher:
                 y = screen_height - new_height - 50
                 self.root.geometry(f'{current_width}x{new_height}+{x}+{y}')
 
-        except Exception as e:
-            print(f"Warning: Could not adjust window height for confirmation: {e}")
+        except Exception:
+            pass
 
     def _restore_original_window_height(self):
         """Restore the original window height after confirmation is hidden"""
@@ -1717,8 +1713,8 @@ class ClaudeConfigSwitcher:
                 self.root.geometry(self.original_geometry)
                 # Remove the stored geometry
                 delattr(self, 'original_geometry')
-        except Exception as e:
-            print(f"Warning: Could not restore original window height: {e}")
+        except Exception:
+            pass
 
     def _adjust_window_height_for_env_vars(self):
         """Increase window size to accommodate environment variables display"""
@@ -1763,8 +1759,8 @@ class ClaudeConfigSwitcher:
 
             self.root.geometry(f'{new_width}x{new_height}+{x}+{y}')
 
-        except Exception as e:
-            print(f"Warning: Could not adjust window size for environment variables: {e}")
+        except Exception:
+            pass
 
     def show_non_modal_confirmation(self, title, message, on_yes_callback):
         """Show a non-modal confirmation dialog that works better on Linux"""
@@ -2088,11 +2084,11 @@ class ClaudeConfigSwitcher:
         elif config_type == 'custom':
             self.custom_env_frame.pack_forget()
 
-        # Also uncheck the main checkbox if all env vars are hidden
-        if not self.zai_env_frame.winfo_ismapped() and not self.custom_env_frame.winfo_ismapped():
-            self.show_env_vars_var.set(False)
-            # Restore original window height when all env vars are hidden
-            self._restore_original_window_height()
+        # Always uncheck the main checkbox when hiding environment variables
+        # since the user explicitly clicked the hide button
+        self.show_env_vars_var.set(False)
+        # Restore original window height when env vars are hidden
+        self._restore_original_window_height()
 
     def toggle_env_vars_visibility(self):
         """Toggle environment variables display visibility"""
@@ -2104,7 +2100,10 @@ class ClaudeConfigSwitcher:
                 self.custom_env_frame.pack(fill=tk.X, pady=(0, 10))
 
             # Update the display with current system values
-            self.root.after(100, self.update_env_vars_display)  # Small delay to ensure widgets are visible
+            # Try multiple times to ensure the update works
+            self.root.after(50, self.update_env_vars_display)
+            self.root.after(150, self.update_env_vars_display)
+            self.root.after(300, self.update_env_vars_display)  # Final retry
 
             # Adjust window height to accommodate environment variables
             self.root.after(200, self._adjust_window_height_for_env_vars)  # Allow widgets to render first
@@ -2135,8 +2134,8 @@ class ClaudeConfigSwitcher:
                 if value:
                     env_vars[var_name] = value
 
-        except Exception as e:
-            print(f"Error getting environment variables: {e}")
+        except Exception:
+            pass
 
         return env_vars
 
@@ -2150,7 +2149,8 @@ class ClaudeConfigSwitcher:
                 value = env_vars.get(var_name, "Not set")
 
                 # Mask sensitive values for display
-                if 'AUTH_TOKEN' in var_name or 'API_KEY' in var_name and value != "Not set":
+                # Fix: Use proper parentheses to ensure correct logic evaluation
+                if (('AUTH_TOKEN' in var_name or 'API_KEY' in var_name) and value != "Not set"):
                     if len(value) > 8:
                         display_value = f"{value[:4]}...{value[-4:]}"
                     else:
@@ -2161,12 +2161,13 @@ class ClaudeConfigSwitcher:
                 label.configure(text=display_value)
 
         # Update custom environment variables if that frame is visible
-        elif self.config_var.get() == "custom" and hasattr(self, 'custom_env_value_labels'):
+        if self.config_var.get() == "custom" and hasattr(self, 'custom_env_value_labels'):
             for var_name, label in self.custom_env_value_labels.items():
                 value = env_vars.get(var_name, "Not set")
 
                 # Mask sensitive values for display
-                if 'AUTH_TOKEN' in var_name or 'API_KEY' in var_name and value != "Not set":
+                # Fix: Use proper parentheses to ensure correct logic evaluation
+                if (('AUTH_TOKEN' in var_name or 'API_KEY' in var_name) and value != "Not set"):
                     if len(value) > 8:
                         display_value = f"{value[:4]}...{value[-4:]}"
                     else:
@@ -2438,13 +2439,9 @@ class ClaudeConfigSwitcher:
 
 def main():
     """Main entry point"""
-    # Display platform information
-    print(f"Starting Claude Code EZ Switch on {platform.system()} {platform.release()}")
-
     # Check platform compatibility
     if not (IS_WINDOWS or IS_LINUX):
-        print(f"Warning: This application is designed for Windows and Linux. Your platform ({platform.system()}) may have limited compatibility.")
-        response = input("Continue anyway? (y/N): ")
+        response = input("This application is designed for Windows and Linux. Continue anyway? (y/N): ")
         if response.lower() != 'y':
             sys.exit(1)
 
@@ -2490,8 +2487,7 @@ def main():
 
         root.geometry(f'{width}x{height}+{x}+{y}')
 
-    except Exception as e:
-        print(f"Warning: Could not center window properly: {e}")
+    except Exception:
         # Set a safe fallback geometry
         if IS_LINUX:
             root.geometry("500x850+100+100")
@@ -2502,12 +2498,10 @@ def main():
     # Use longer delay on Linux to ensure window manager has processed the window
     if IS_LINUX:
         # Skip complex window styling on Linux to avoid freezes
-        print("Linux detected: Using simplified window management")
+        pass
     else:
         delay = 200
         root.after(delay, app.set_window_style)
-
-    print(f"Window initialized with geometry: {root.geometry()}")
     root.mainloop()
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # Claude Code EZ Switch
 
-**A simple alternative to Claude Code Router** - Easy GUI for switching between Claude Code API providers (Z.ai, Anthropic, Moonshot.ai, Custom).
+**A simple alternative to Claude Code Router** - Easy GUI for adding and managing your Z.ai API keys with Claude Code.
 
 ## Features
 - Simple graphical interface

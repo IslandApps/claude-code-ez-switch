@@ -105,7 +105,7 @@ font_manager = FontManager()
 class ClaudeConfigSwitcher:
     def __init__(self, root):
         self.root = root
-        self.root.title("Claude Code EZ Switch")
+        self.root.title("")
 
         # Platform-specific window settings
         if IS_LINUX:
@@ -152,6 +152,7 @@ class ClaudeConfigSwitcher:
         self.bg_color = "#1e1e1e"
         self.fg_color = "#ffffff"
         self.accent_color = "#007acc"
+        self.radio_orange_color = "#FFB366"  # Lighter orange for radio buttons
         self.button_bg = "#0e639c"
         self.button_hover = "#1177bb"
         self.entry_bg = "#2d2d2d"
@@ -384,12 +385,8 @@ class ClaudeConfigSwitcher:
         title_bar = tk.Frame(self.root, bg=self.bg_color, relief=tk.RAISED, bd=0)
         title_bar.pack(fill=tk.X, side=tk.TOP)
 
-        # Add invisible top padding label to force height
-        top_pad = tk.Label(title_bar, bg=self.bg_color, height=1, text="")
-        top_pad.pack(fill=tk.X, side=tk.TOP)
-
         # Main title content frame
-        title_content = tk.Frame(title_bar, bg=self.bg_color, height=30)
+        title_content = tk.Frame(title_bar, bg=self.bg_color, height=15)
         title_content.pack(fill=tk.X, side=tk.TOP)
         title_content.pack_propagate(False)
 
@@ -405,29 +402,15 @@ class ClaudeConfigSwitcher:
         title_frame = tk.Frame(title_content, bg=self.bg_color)
         title_frame.pack(side=tk.LEFT, padx=10, pady=5)
 
-        claude_code_label = tk.Label(title_frame, text="Claude Code", bg=self.bg_color, fg="#FF8C00",
-                                   font=font_manager.get_font(10, 'bold'))
-        claude_code_label.pack(side=tk.LEFT)
-
-        ez_switch_label = tk.Label(title_frame, text=" EZ Switch", bg=self.bg_color, fg=self.fg_color,
-                                 font=font_manager.get_font(10, 'bold'))
-        ez_switch_label.pack(side=tk.LEFT)
-
+    
         # Window controls container
         controls_frame = tk.Frame(title_content, bg=self.bg_color)
         controls_frame.pack(side=tk.RIGHT, padx=5, pady=2)
 
   
-        # Close button
-        close_btn = tk.Button(controls_frame, text="×", bg="#dc3545", fg=self.fg_color,
-                             font=font_manager.get_font(12, 'bold'), relief=tk.FLAT, bd=0, width=3, height=1,
-                             cursor="hand2", command=self.close_window)
-        close_btn.pack(side=tk.LEFT, padx=2)
-        close_btn.bind('<Enter>', lambda e: close_btn.configure(bg="#c82333"))
-        close_btn.bind('<Leave>', lambda e: close_btn.configure(bg="#dc3545"))
-
+  
         # Main container
-        main_frame = tk.Frame(self.root, bg=self.bg_color, padx=30, pady=20)
+        main_frame = tk.Frame(self.root, bg=self.bg_color, padx=30, pady=10)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         # Content frame (everything except footer)
@@ -448,7 +431,7 @@ class ClaudeConfigSwitcher:
         
         # Modern Logo Container
         logo_container = tk.Frame(content_frame, bg=self.bg_color)
-        logo_container.pack(pady=(20, 15))
+        logo_container.pack(pady=(0, 15))
 
         # Logo frame with styling
         logo_frame = tk.Frame(logo_container, bg=self.bg_color)
@@ -528,23 +511,21 @@ class ClaudeConfigSwitcher:
             self.create_custom_radio_button(radio_container, "Custom", "custom")
         else:
             # Use standard ttk radio buttons for other platforms
-            # Z.ai radio button
+            # Create radio buttons horizontally
             zai_radio = ttk.Radiobutton(radio_container, text="Z.ai",
                                        variable=self.config_var, value="zai",
                                        command=self.on_config_change, style='TRadiobutton')
-            zai_radio.pack(anchor=tk.W, pady=(0, 5))
+            zai_radio.pack(side=tk.LEFT, padx=(0, 20))
 
-            # Claude radio button
             claude_radio = ttk.Radiobutton(radio_container, text="Claude",
                                          variable=self.config_var, value="claude",
                                          command=self.on_config_change, style='TRadiobutton')
-            claude_radio.pack(anchor=tk.W, pady=(0, 5))
+            claude_radio.pack(side=tk.LEFT, padx=(0, 20))
 
-            # Custom radio button
             custom_radio = ttk.Radiobutton(radio_container, text="Custom",
                                           variable=self.config_var, value="custom",
                                           command=self.on_config_change, style='TRadiobutton')
-            custom_radio.pack(anchor=tk.W, pady=(0, 5))
+            custom_radio.pack(side=tk.LEFT)
         
         # Dynamic configuration container (where different configs will be shown)
         self.dynamic_config_container = tk.Frame(content_frame, bg=self.bg_color)
@@ -646,7 +627,7 @@ class ClaudeConfigSwitcher:
         """Create a custom radio button with larger indicator for Linux"""
         # Create frame for the radio button
         radio_frame = tk.Frame(parent, bg=self.bg_color)
-        radio_frame.pack(fill=tk.X, pady=(0, 12))
+        radio_frame.pack(side=tk.LEFT, padx=(0, 20))
 
         # Create canvas for drawing the radio button circle
         canvas_size = 24  # Larger than default
@@ -737,9 +718,11 @@ class ClaudeConfigSwitcher:
 
         if is_selected:
             # Fill the inner circle and change text color
-            canvas.itemconfig(inner_circle, fill=self.accent_color)
-            canvas.itemconfig(radio_info['outer_circle'], outline=self.accent_color)
-            radio_info['label'].config(fg=self.accent_color)
+            # Use lighter orange for all radio buttons
+            color = self.radio_orange_color
+            canvas.itemconfig(inner_circle, fill=color)
+            canvas.itemconfig(radio_info['outer_circle'], outline=color)
+            radio_info['label'].config(fg=color)
         else:
             # Clear the inner circle and reset text color
             canvas.itemconfig(inner_circle, fill="")
@@ -756,7 +739,9 @@ class ClaudeConfigSwitcher:
 
         if not radio_info['selected']:  # Only apply hover if not selected
             if is_hovering:
-                canvas.itemconfig(radio_info['outer_circle'], outline=self.accent_color)
+                # Use lighter orange for all radio buttons
+                color = self.radio_orange_color
+                canvas.itemconfig(radio_info['outer_circle'], outline=color)
             else:
                 canvas.itemconfig(radio_info['outer_circle'], outline=self.fg_color)
 
@@ -935,7 +920,7 @@ class ClaudeConfigSwitcher:
         # Environment variables data
         zai_env_vars = [
             ("ANTHROPIC_AUTH_TOKEN", "<your-zai-api-key>", "User level"),
-            ("ANTHROPIC_BASE_URL", "https://api.z.ai/api/coding/paas", "User level"),
+            ("ANTHROPIC_BASE_URL", "https://api.z.ai/api/anthropic", "User level"),
             ("ANTHROPIC_DEFAULT_OPUS_MODEL", "GLM-4.6", "User level"),
             ("ANTHROPIC_DEFAULT_SONNET_MODEL", "GLM-4.6", "User level"),
             ("ANTHROPIC_DEFAULT_HAIKU_MODEL", "GLM-4.6", "User level")
@@ -2327,7 +2312,7 @@ class ClaudeConfigSwitcher:
                 # Set z.ai environment variables (all at User level to avoid admin requirements)
                 env_vars = [
                     ('ANTHROPIC_AUTH_TOKEN', zai_key),
-                    ('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/coding/paas'),
+                    ('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/anthropic'),
                     ('ANTHROPIC_DEFAULT_OPUS_MODEL', 'GLM-4.6'),
                     ('ANTHROPIC_DEFAULT_SONNET_MODEL', 'GLM-4.6'),
                     ('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'GLM-4.6')

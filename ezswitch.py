@@ -120,7 +120,13 @@ class ClaudeConfigSwitcher:
 
         # Remove window decorations and create custom title bar
         # Hide native menu bar on both Windows and Linux
-        self.root.overrideredirect(True)
+        # Note: This can cause focus issues on Linux, so we'll be more careful
+        if IS_WINDOWS:
+            self.root.overrideredirect(True)
+        else:
+            # On Linux, skip window override to avoid focus issues
+            # Keep native window decorations for better compatibility
+            pass
 
         # Variables for window dragging
         self.start_x = None
@@ -757,16 +763,61 @@ class ClaudeConfigSwitcher:
     def on_entry_click(self, event):
         """Handle entry field click to ensure proper focus on Linux"""
         widget = event.widget
-        # Simple focus setting - avoid complex focus management
+        # Ensure the widget can receive focus and input
         widget.focus_set()
+        widget.focus_force()
+        # Make sure the widget is enabled and can receive input
+        if widget.cget('state') == tk.DISABLED:
+            widget.configure(state=tk.NORMAL)
+        # Ensure the cursor is visible and positioned correctly
+        widget.icursor(tk.END)
     
     def setup_linux_focus(self):
         """Set up proper focus handling for Linux"""
         try:
-            # Simple focus setup - avoid complex focus management that might cause freezes
+            # Enhanced focus setup for Linux to ensure input fields work
             if hasattr(self, 'zai_key_entry'):
-                self.root.after(500, lambda: self.zai_key_entry.focus_set())
+                # Set up all entry fields for proper focus
+                entry_fields = [
+                    self.zai_key_entry,
+                    self.zai_key_name_entry,
+                    self.claude_key_entry,
+                    self.custom_url_entry,
+                    self.custom_key_entry
+                ]
                 
+                for entry in entry_fields:
+                    if entry:
+                        # Ensure entry is enabled and can receive focus
+                        if entry.cget('state') == tk.DISABLED:
+                            entry.configure(state=tk.NORMAL)
+                        # Set focus and ensure cursor is at end
+                        entry.focus_set()
+                        entry.icursor(tk.END)
+                        # Bind additional events to ensure focus works
+                        entry.bind('<FocusIn>', lambda e, widget=entry: widget.icursor(tk.END))
+                        entry.bind('<Button-1>', lambda e, widget=entry: self._ensure_entry_focus(widget))
+                        
+                # Set initial focus to zai_key_entry after a short delay
+                self.root.after(200, lambda: self._ensure_entry_focus(self.zai_key_entry))
+                 
+        except Exception:
+            pass
+    
+    def _ensure_entry_focus(self, entry):
+        """Helper method to ensure an entry field has proper focus"""
+        try:
+            if entry and entry.winfo_exists():
+                # Make sure entry is enabled
+                if entry.cget('state') == tk.DISABLED:
+                    entry.configure(state=tk.NORMAL)
+                # Set focus and move cursor to end
+                entry.focus_set()
+                entry.focus_force()
+                entry.icursor(tk.END)
+                # Make sure the window is active
+                self.root.lift()
+                self.root.focus_force()
         except Exception:
             pass
     
@@ -884,7 +935,7 @@ class ClaudeConfigSwitcher:
         # Environment variables data
         zai_env_vars = [
             ("ANTHROPIC_AUTH_TOKEN", "<your-zai-api-key>", "User level"),
-            ("ANTHROPIC_BASE_URL", "https://api.z.ai/api/anthropic", "User level"),
+            ("ANTHROPIC_BASE_URL", "https://api.z.ai/api/coding/paas/v4", "User level"),
             ("ANTHROPIC_DEFAULT_OPUS_MODEL", "GLM-4.6", "User level"),
             ("ANTHROPIC_DEFAULT_SONNET_MODEL", "GLM-4.6", "User level"),
             ("ANTHROPIC_DEFAULT_HAIKU_MODEL", "GLM-4.6", "User level")
@@ -991,8 +1042,10 @@ class ClaudeConfigSwitcher:
                                          font=font_manager.get_font(10), bd=0)
         self.custom_url_entry.pack(fill=tk.X, padx=15, pady=(0, 2), ipady=8)
         
-        # Bind focus events for proper input handling
+        # Enhanced focus events for proper input handling
         self.custom_url_entry.bind('<Button-1>', self.on_entry_click)
+        self.custom_url_entry.bind('<FocusIn>', lambda e: self.custom_url_entry.icursor(tk.END))
+        # Remove the problematic Key binding that was preventing input
 
         # Add border to entry
         custom_url_border = tk.Frame(self.custom_frame, bg=self.accent_color, height=2)
@@ -1006,8 +1059,10 @@ class ClaudeConfigSwitcher:
                                          font=font_manager.get_font(10), bd=0, show="*")
         self.custom_key_entry.pack(fill=tk.X, padx=15, pady=(0, 2), ipady=8)
         
-        # Bind focus events for proper input handling
+        # Enhanced focus events for proper input handling
         self.custom_key_entry.bind('<Button-1>', self.on_entry_click)
+        self.custom_key_entry.bind('<FocusIn>', lambda e: self.custom_key_entry.icursor(tk.END))
+        # Remove the problematic Key binding that was preventing input
 
         # Add border to entry
         custom_key_border = tk.Frame(self.custom_frame, bg=self.accent_color, height=2)
@@ -2272,7 +2327,7 @@ class ClaudeConfigSwitcher:
                 # Set z.ai environment variables (all at User level to avoid admin requirements)
                 env_vars = [
                     ('ANTHROPIC_AUTH_TOKEN', zai_key),
-                    ('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/anthropic'),
+                    ('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/coding/paas/v4'),
                     ('ANTHROPIC_DEFAULT_OPUS_MODEL', 'GLM-4.6'),
                     ('ANTHROPIC_DEFAULT_SONNET_MODEL', 'GLM-4.6'),
                     ('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'GLM-4.6')

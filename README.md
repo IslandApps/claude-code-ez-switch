@@ -17,6 +17,7 @@ A simple GUI application for managing Claude Code API configurations - easily sw
 ## Platform Support
 - **Windows**: Full support with registry-based environment variable management
 - **Linux**: Full support with shell configuration management (.bashrc, .zshrc, .profile)
+- **macOS**: 🚀 Coming soon! Support for shell configuration management (.zshrc, .bash_profile, etc.)
 
 ## Quick Start
 ```bash

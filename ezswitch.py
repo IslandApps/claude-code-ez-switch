@@ -935,7 +935,7 @@ class ClaudeConfigSwitcher:
         # Environment variables data
         zai_env_vars = [
             ("ANTHROPIC_AUTH_TOKEN", "<your-zai-api-key>", "User level"),
-            ("ANTHROPIC_BASE_URL", "https://api.z.ai/api/coding/paas/v4", "User level"),
+            ("ANTHROPIC_BASE_URL", "https://api.z.ai/api/coding/paas", "User level"),
             ("ANTHROPIC_DEFAULT_OPUS_MODEL", "GLM-4.6", "User level"),
             ("ANTHROPIC_DEFAULT_SONNET_MODEL", "GLM-4.6", "User level"),
             ("ANTHROPIC_DEFAULT_HAIKU_MODEL", "GLM-4.6", "User level")
@@ -2327,7 +2327,7 @@ class ClaudeConfigSwitcher:
                 # Set z.ai environment variables (all at User level to avoid admin requirements)
                 env_vars = [
                     ('ANTHROPIC_AUTH_TOKEN', zai_key),
-                    ('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/coding/paas/v4'),
+                    ('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/coding/paas'),
                     ('ANTHROPIC_DEFAULT_OPUS_MODEL', 'GLM-4.6'),
                     ('ANTHROPIC_DEFAULT_SONNET_MODEL', 'GLM-4.6'),
                     ('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'GLM-4.6')

@@ -12,6 +12,7 @@ import platform
 # Platform detection and module imports
 IS_WINDOWS = platform.system() == "Windows"
 IS_LINUX = platform.system() == "Linux"
+IS_MACOS = platform.system() == "Darwin"
 
 # Try to import Windows-specific modules
 try:
@@ -29,6 +30,8 @@ class FontManager:
         # Platform-specific font preferences
         if IS_LINUX:
             self.fallback_fonts = ["Ubuntu", "DejaVu Sans", "Liberation Sans", "Noto Sans", "Cantarell", "Arial", "Helvetica", "sans-serif"]
+        elif IS_MACOS:
+            self.fallback_fonts = ["SF Pro", "San Francisco", "Helvetica Neue", "Arial", "Helvetica", "sans-serif"]
         else:
             self.fallback_fonts = ["Segoe UI", "Arial", "Helvetica", "sans-serif"]
         self.available_font = None
@@ -89,6 +92,9 @@ class FontManager:
         if IS_LINUX:
             # Linux often needs smaller fonts for the same perceived size
             scaled_size = max(size - 1, 8)  # Reduce by 1 but keep minimum of 8
+        elif IS_MACOS:
+            # macOS handles font scaling well, use original size
+            scaled_size = size
         else:
             scaled_size = size
 
@@ -119,10 +125,13 @@ class ClaudeConfigSwitcher:
             self.root.resizable(False, False)
 
         # Remove window decorations and create custom title bar
-        # Hide native menu bar on both Windows and Linux
-        # Note: This can cause focus issues on Linux, so we'll be more careful
+        # Platform-specific window handling
         if IS_WINDOWS:
             self.root.overrideredirect(True)
+        elif IS_MACOS:
+            # On macOS, use native window decorations for best integration
+            # Don't override redirect to maintain proper macOS behavior
+            pass
         else:
             # On Linux, skip window override to avoid focus issues
             # Keep native window decorations for better compatibility
@@ -262,6 +271,19 @@ class ClaudeConfigSwitcher:
                         self.root.attributes('-toolpalette', True)
                     except:
                         pass
+            except Exception:
+                pass
+        elif IS_MACOS:
+            # On macOS, ensure proper window behavior and appearance
+            try:
+                # macOS-specific window attributes for better integration
+                self.root.attributes('-alpha', 1.0)  # Ensure full opacity
+                self.root.attributes('-topmost', False)
+                # Try to disable window animations for smoother experience
+                try:
+                    self.root.tk.call('tk::mac::standardAboutPanel')
+                except:
+                    pass
             except Exception:
                 pass
         else:
@@ -1169,15 +1191,26 @@ class ClaudeConfigSwitcher:
                     capture_output=True, text=True, timeout=5
                 )
                 return result.stdout.strip()
-            elif IS_LINUX:
-                # For Linux, check in common shell configuration files with better error handling
+            elif IS_LINUX or IS_MACOS:
+                # For Linux and macOS, check in common shell configuration files with better error handling
                 home_dir = Path.home()
-                config_files = [
-                    home_dir / '.bashrc',
-                    home_dir / '.profile',
-                    home_dir / '.zshrc',
-                    home_dir / '.bash_profile'
-                ]
+                if IS_MACOS:
+                    # macOS-specific shell configuration files (Zsh is default)
+                    config_files = [
+                        home_dir / '.zshrc',
+                        home_dir / '.zprofile',
+                        home_dir / '.bash_profile',
+                        home_dir / '.bashrc',
+                        home_dir / '.profile'
+                    ]
+                else:
+                    # Linux shell configuration files
+                    config_files = [
+                        home_dir / '.bashrc',
+                        home_dir / '.profile',
+                        home_dir / '.zshrc',
+                        home_dir / '.bash_profile'
+                    ]
 
                 # Check each file for the environment variable
                 for config_file in config_files:
@@ -1214,16 +1247,27 @@ class ClaudeConfigSwitcher:
                 command = f"[System.Environment]::SetEnvironmentVariable('{var_name}', '{value}', 'User')"
                 success, output = self.run_powershell_command(command)
                 return success, output
-            elif IS_LINUX:
-                # For Linux, use a more robust approach with better error handling
+            elif IS_LINUX or IS_MACOS:
+                # For Linux and macOS, use a more robust approach with better error handling
                 home_dir = Path.home()
-                
+
                 # Try multiple shell config files in order of preference
-                config_files = [
-                    home_dir / '.bashrc',
-                    home_dir / '.profile',
-                    home_dir / '.zshrc'
-                ]
+                if IS_MACOS:
+                    # macOS-specific shell configuration files (Zsh is default)
+                    config_files = [
+                        home_dir / '.zshrc',
+                        home_dir / '.zprofile',
+                        home_dir / '.bash_profile',
+                        home_dir / '.bashrc',
+                        home_dir / '.profile'
+                    ]
+                else:
+                    # Linux shell configuration files
+                    config_files = [
+                        home_dir / '.bashrc',
+                        home_dir / '.profile',
+                        home_dir / '.zshrc'
+                    ]
                 
                 # Find the first existing/writable config file
                 target_file = None
@@ -1364,15 +1408,26 @@ class ClaudeConfigSwitcher:
                 else:
                     return False, f"Failed to remove {var_name}: {result.stderr}"
 
-            elif IS_LINUX:
-                # For Linux, remove from shell configuration files
+            elif IS_LINUX or IS_MACOS:
+                # For Linux and macOS, remove from shell configuration files
                 home_dir = Path.home()
-                config_files = [
-                    home_dir / '.bashrc',
-                    home_dir / '.profile',
-                    home_dir / '.zshrc',
-                    home_dir / '.bash_profile'
-                ]
+                if IS_MACOS:
+                    # macOS-specific shell configuration files (Zsh is default)
+                    config_files = [
+                        home_dir / '.zshrc',
+                        home_dir / '.zprofile',
+                        home_dir / '.bash_profile',
+                        home_dir / '.bashrc',
+                        home_dir / '.profile'
+                    ]
+                else:
+                    # Linux shell configuration files
+                    config_files = [
+                        home_dir / '.bashrc',
+                        home_dir / '.profile',
+                        home_dir / '.zshrc',
+                        home_dir / '.bash_profile'
+                    ]
 
                 files_modified = []
                 for config_file in config_files:
@@ -2336,6 +2391,8 @@ class ClaudeConfigSwitcher:
                 restart_message = "IMPORTANT: You must close and reopen VS Code or any application using Claude Code for changes to take effect.\n"
                 if IS_LINUX:
                     restart_message += "You may also need to run 'source ~/.bashrc' or restart your terminal."
+                elif IS_MACOS:
+                    restart_message += "You may also need to run 'source ~/.zshrc' or restart your terminal."
                 else:
                     restart_message += "If using terminal only, close and reopen the terminal."
 
@@ -2450,6 +2507,8 @@ class ClaudeConfigSwitcher:
                 restart_message = "IMPORTANT: You must close and reopen VS Code or any application using Claude Code for changes to take effect.\n"
                 if IS_LINUX:
                     restart_message += "You may also need to run 'source ~/.bashrc' or restart your terminal."
+                elif IS_MACOS:
+                    restart_message += "You may also need to run 'source ~/.zshrc' or restart your terminal."
                 else:
                     restart_message += "If using terminal only, close and reopen the terminal."
 
@@ -2480,8 +2539,8 @@ class ClaudeConfigSwitcher:
 def main():
     """Main entry point"""
     # Check platform compatibility
-    if not (IS_WINDOWS or IS_LINUX):
-        response = input("This application is designed for Windows and Linux. Continue anyway? (y/N): ")
+    if not (IS_WINDOWS or IS_LINUX or IS_MACOS):
+        response = input("This application is designed for Windows, Linux, and macOS. Continue anyway? (y/N): ")
         if response.lower() != 'y':
             sys.exit(1)
 
@@ -2496,21 +2555,44 @@ def main():
             root.attributes('-depth', 24)
         except:
             pass
+    elif IS_MACOS:
+        try:
+            # macOS-specific window settings
+            root.tk.call('tk', 'scaling', 1.0)
+            # Ensure proper retina display handling
+            root.attributes('-alpha', 1.0)
+        except:
+            pass
 
     app = ClaudeConfigSwitcher(root)
 
-    # Center window on screen with Linux-specific handling
+    # Center window on screen with platform-specific handling
     root.update_idletasks()
 
     try:
-        width = root.winfo_reqwidth() if IS_LINUX else root.winfo_width()
-        height = root.winfo_reqheight() if IS_LINUX else root.winfo_height()
+        # Use reqwidth/reqheight for Linux and macOS, winfo_width/height for Windows
+        if IS_LINUX or IS_MACOS:
+            width = root.winfo_reqwidth()
+            height = root.winfo_reqheight()
+        else:
+            width = root.winfo_width()
+            height = root.winfo_height()
 
         # Fallback if dimensions are too small
         if width < 400:
-            width = 500 if IS_LINUX else 600
+            if IS_LINUX:
+                width = 500
+            elif IS_MACOS:
+                width = 600
+            else:
+                width = 600
         if height < 600:
-            height = 850 if IS_LINUX else 1000
+            if IS_LINUX:
+                height = 850
+            elif IS_MACOS:
+                height = 1000
+            else:
+                height = 1000
 
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()

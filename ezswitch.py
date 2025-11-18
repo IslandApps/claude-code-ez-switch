@@ -981,21 +981,32 @@ class ClaudeConfigSwitcher:
 
         self.claude_mode_var = tk.StringVar(value="subscription")
 
+        # Create a container for radio buttons to ensure proper vertical layout
+        radio_container = tk.Frame(self.claude_frame, bg=self.entry_bg)
+        radio_container.pack(fill=tk.X, padx=15, pady=(10, 5))
+
         if IS_LINUX:
             # Create custom radio buttons for Linux for Claude mode selection
-            self.create_custom_radio_button(self.claude_frame, "Use Claude Subscription (Pro/Team/Enterprise)", "subscription")
-            self.create_custom_radio_button(self.claude_frame, "Use Claude API Key", "api")
+            # Reset custom radio buttons for Claude context
+            self.claude_radio_buttons = {}
+            self.create_claude_custom_radio_button(radio_container, "Use Claude Subscription (Pro/Team/Enterprise)", "subscription")
+            # Create a frame to force layout to stack vertically
+            tk.Frame(radio_container, bg=self.entry_bg, height=5).pack(fill=tk.X)
+            self.create_claude_custom_radio_button(radio_container, "Use Claude API Key", "api")
         else:
             # Use standard ttk radio buttons for other platforms
-            subscription_radio = ttk.Radiobutton(self.claude_frame, text="Use Claude Subscription (Pro/Team/Enterprise)",
+            subscription_radio = ttk.Radiobutton(radio_container, text="Use Claude Subscription (Pro/Team/Enterprise)",
                                                 variable=self.claude_mode_var, value="subscription",
                                                 command=self.on_claude_mode_change, style='TRadiobutton')
-            subscription_radio.pack(anchor=tk.W, padx=15, pady=(10, 5))
+            subscription_radio.pack(anchor=tk.W, pady=(0, 5))
 
-            api_radio = ttk.Radiobutton(self.claude_frame, text="Use Claude API Key",
+            api_radio = ttk.Radiobutton(radio_container, text="Use Claude API Key",
                                         variable=self.claude_mode_var, value="api",
                                         command=self.on_claude_mode_change, style='TRadiobutton')
-            api_radio.pack(anchor=tk.W, padx=15, pady=(0, 5))
+            api_radio.pack(anchor=tk.W, pady=(0, 5))
+
+        # Add spacing before the API key input field
+        tk.Frame(self.claude_frame, bg=self.entry_bg, height=10).pack(fill=tk.X, padx=15, pady=(10, 0))
 
         claude_key_label = ttk.Label(self.claude_frame, text="Claude API Key:")
         claude_key_label.pack(anchor=tk.W, padx=15, pady=(5, 2))
@@ -1018,16 +1029,121 @@ class ClaudeConfigSwitcher:
         if IS_LINUX:
             self.root.after(100, self.update_claude_radio_display)
 
+    def create_claude_custom_radio_button(self, parent, text, value):
+        """Create a custom radio button for Claude that stacks vertically"""
+        # Create frame for the radio button that stacks vertically
+        radio_frame = tk.Frame(parent, bg=self.entry_bg)
+        radio_frame.pack(fill=tk.X, pady=2)
+
+        # Create canvas for drawing the radio button circle
+        canvas_size = 24  # Larger than default
+        canvas = tk.Canvas(radio_frame, width=canvas_size, height=canvas_size,
+                          bg=self.entry_bg, highlightthickness=0, bd=0)
+        canvas.pack(side=tk.LEFT, padx=(0, 10))
+
+        # Draw the radio button circle (outer ring)
+        outer_circle = canvas.create_oval(2, 2, canvas_size-2, canvas_size-2,
+                                        outline=self.fg_color, width=3)
+
+        # Draw the inner circle (filled when selected)
+        inner_circle = canvas.create_oval(8, 8, canvas_size-8, canvas_size-8,
+                                        fill="", outline="")
+
+        # Create the text label
+        label = tk.Label(radio_frame, text=text, bg=self.entry_bg, fg=self.fg_color,
+                        font=font_manager.get_font(11),  # Smaller font size for radio button text
+                        bd=0, relief=tk.FLAT, highlightthickness=0)
+
+        # Force background color to override any theme defaults
+        label.configure(bg=self.entry_bg)
+
+        label.pack(side=tk.LEFT, padx=0, pady=5)
+
+        # Store radio button info for Claude context
+        self.claude_radio_buttons[value] = {
+            'canvas': canvas,
+            'outer_circle': outer_circle,
+            'inner_circle': inner_circle,
+            'label': label,
+            'selected': False,
+            'radio_frame': radio_frame
+        }
+
+        # Bind click events to all parts of the radio button
+        for widget in [canvas, label, radio_frame]:
+            widget.bind('<Button-1>', lambda e, val=value: self.on_claude_custom_radio_click(val))
+            widget.bind('<Enter>', lambda e, val=value: self.on_claude_custom_radio_hover(val, True))
+            widget.bind('<Leave>', lambda e, val=value: self.on_claude_custom_radio_hover(val, False))
+
+        # Set initial selection for subscription mode
+        if value == "subscription":
+            self.update_claude_custom_radio_display(value, True)
+
+    def on_claude_custom_radio_click(self, value):
+        """Handle Claude custom radio button click"""
+        if value not in self.claude_radio_buttons:
+            return
+
+        # Update the variable
+        self.claude_mode_var.set(value)
+
+        # Update all radio button displays
+        for radio_value in self.claude_radio_buttons:
+            self.update_claude_custom_radio_display(radio_value, radio_value == value)
+
+        # Call the original change handler
+        self.on_claude_mode_change()
+
+    def update_claude_custom_radio_display(self, value, is_selected):
+        """Update the visual display of a Claude custom radio button"""
+        if value not in self.claude_radio_buttons:
+            return
+
+        radio_info = self.claude_radio_buttons[value]
+        radio_info['selected'] = is_selected
+
+        canvas = radio_info['canvas']
+        inner_circle = radio_info['inner_circle']
+
+        if is_selected:
+            # Fill the inner circle and change color
+            canvas.itemconfig(inner_circle, fill=self.radio_orange_color, outline="")
+            # Use lighter orange for all radio buttons
+            color = self.radio_orange_color
+            canvas.itemconfig(radio_info['outer_circle'], outline=color)
+            radio_info['label'].config(fg=color)
+        else:
+            # Empty the inner circle
+            canvas.itemconfig(inner_circle, fill="", outline="")
+            canvas.itemconfig(radio_info['outer_circle'], outline=self.fg_color)
+            radio_info['label'].config(fg=self.fg_color)
+
+    def on_claude_custom_radio_hover(self, value, is_hovering):
+        """Handle hover effect for Claude custom radio buttons"""
+        if value not in self.claude_radio_buttons:
+            return
+
+        radio_info = self.claude_radio_buttons[value]
+        canvas = radio_info['canvas']
+
+        if not radio_info['selected']:  # Only apply hover if not selected
+            if is_hovering:
+                # Use lighter orange for all radio buttons
+                color = self.radio_orange_color
+                canvas.itemconfig(radio_info['outer_circle'], outline=color)
+            else:
+                canvas.itemconfig(radio_info['outer_circle'], outline=self.fg_color)
+
     def update_claude_radio_display(self):
         """Update Claude radio button display for Linux"""
-        if IS_LINUX and hasattr(self, 'custom_radio_buttons'):
+        if IS_LINUX and hasattr(self, 'claude_radio_buttons'):
             # Set initial selection for subscription mode
             if self.claude_mode_var.get() == "subscription":
-                self.update_custom_radio_display("subscription", True)
-                self.update_custom_radio_display("api", False)
+                self.update_claude_custom_radio_display("subscription", True)
+                self.update_claude_custom_radio_display("api", False)
             else:
-                self.update_custom_radio_display("subscription", False)
-                self.update_custom_radio_display("api", True)
+                self.update_claude_custom_radio_display("subscription", False)
+                self.update_claude_custom_radio_display("api", True)
 
     def on_claude_mode_change(self):
         """Handle Claude mode radio button change"""

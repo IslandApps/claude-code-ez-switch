@@ -572,9 +572,9 @@ class ClaudeConfigSwitcher:
                                            padx=5, pady=5)
         show_password_check.pack(anchor=tk.W, pady=(10, 0))
 
-        # Show Environment Variables Checkbutton
+        # Show Claude Settings Checkbutton
         self.show_env_vars_var = tk.BooleanVar()
-        show_env_vars_check = tk.Checkbutton(content_frame, text="Show Environment Variables",
+        show_env_vars_check = tk.Checkbutton(content_frame, text="Show Claude Settings",
                                            variable=self.show_env_vars_var,
                                            command=self.toggle_env_vars_visibility,
                                            bg=self.bg_color, fg=self.fg_color,
@@ -628,6 +628,65 @@ class ClaudeConfigSwitcher:
         
         # Hover effects removed
         
+        # Universal Claude Settings Display (hidden by default)
+        self.universal_settings_frame = tk.Frame(main_frame, bg=self.entry_bg)
+
+        # Hide button for universal settings
+        universal_hide_frame = tk.Frame(self.universal_settings_frame, bg=self.entry_bg)
+        universal_hide_frame.pack(fill=tk.X, padx=15, pady=(10, 5))
+
+        universal_hide_btn = tk.Button(universal_hide_frame, text="✕ Hide Settings",
+                                       bg=self.close_button_bg, fg=self.fg_color,
+                                       font=font_manager.get_font(9, 'bold'), relief=tk.FLAT,
+                                       cursor="hand2", bd=0, pady=5,
+                                       command=self.hide_universal_settings)
+        universal_hide_btn.pack(side=tk.RIGHT)
+
+        # Create grid layout for settings display
+        universal_settings_container = tk.Frame(self.universal_settings_frame, bg=self.entry_bg)
+        universal_settings_container.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Settings title
+        settings_title = tk.Label(universal_settings_container, text="Current Claude Code Settings:",
+                                 bg=self.entry_bg, fg=self.accent_color,
+                                 font=font_manager.get_font(10, 'bold'), anchor=tk.W)
+        settings_title.grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 8))
+
+        # Define all possible ANTHROPIC variables to display
+        universal_env_vars = [
+            ('ANTHROPIC_AUTH_TOKEN', 'Authentication Token'),
+            ('ANTHROPIC_BASE_URL', 'Base URL'),
+            ('ANTHROPIC_DEFAULT_OPUS_MODEL', 'Default Opus Model'),
+            ('ANTHROPIC_DEFAULT_SONNET_MODEL', 'Default Sonnet Model'),
+            ('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'Default Haiku Model'),
+            ('ANTHROPIC_API_KEY', 'API Key'),
+            ('API_TIMEOUT_MS', 'API Timeout (ms)')
+        ]
+
+        # Create labels for each variable
+        self.universal_value_labels = {}
+        for i, (var_name, display_name) in enumerate(universal_env_vars, start=1):
+            # Variable name label
+            var_label = tk.Label(universal_settings_container, text=f"{display_name}:",
+                               bg=self.entry_bg, fg=self.fg_color,
+                               font=font_manager.get_font(9), anchor=tk.W)
+            var_label.grid(row=i, column=0, sticky=tk.W, pady=(2, 2))
+
+            # Value label
+            value_label = tk.Label(universal_settings_container, text="Not set",
+                                 bg=self.entry_bg, fg="#888888",
+                                 font=font_manager.get_font(9, 'italic'), anchor=tk.W)
+            value_label.grid(row=i, column=1, sticky=tk.W, padx=(10, 0), pady=(2, 2))
+
+            self.universal_value_labels[var_name] = value_label
+
+        # Note at the bottom
+        note_label = tk.Label(universal_settings_container,
+                            text="Note: These settings are stored in ~/.claude/settings.json",
+                            bg=self.entry_bg, fg="#888888",
+                            font=font_manager.get_font(8, "italic"), anchor=tk.W)
+        note_label.grid(row=len(universal_env_vars) + 1, column=0, columnspan=2, sticky=tk.W, pady=(8, 0))
+
         # Footer
         footer_frame = tk.Frame(main_frame, bg=self.bg_color)
         footer_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(20, 10))
@@ -920,7 +979,7 @@ class ClaudeConfigSwitcher:
         zai_hide_frame = tk.Frame(self.zai_env_frame, bg=self.entry_bg)
         zai_hide_frame.pack(fill=tk.X, padx=15, pady=(10, 5))
 
-        zai_hide_btn = tk.Button(zai_hide_frame, text="✕ Hide Environment Variables",
+        zai_hide_btn = tk.Button(zai_hide_frame, text="✕ Hide Settings",
                                 bg=self.close_button_bg, fg=self.fg_color,
                                 font=font_manager.get_font(9, 'bold'), relief=tk.FLAT,
                                 cursor="hand2", bd=0, pady=5,
@@ -1198,7 +1257,7 @@ class ClaudeConfigSwitcher:
         custom_hide_frame = tk.Frame(self.custom_env_frame, bg=self.entry_bg)
         custom_hide_frame.pack(fill=tk.X, padx=15, pady=(10, 5))
 
-        custom_hide_btn = tk.Button(custom_hide_frame, text="✕ Hide Environment Variables",
+        custom_hide_btn = tk.Button(custom_hide_frame, text="✕ Hide Settings",
                                     bg=self.close_button_bg, fg=self.fg_color,
                                     font=font_manager.get_font(9, 'bold'), relief=tk.FLAT,
                                     cursor="hand2", bd=0, pady=5,
@@ -1255,14 +1314,20 @@ class ClaudeConfigSwitcher:
         self.custom_url_entry.bind('<KeyRelease>', lambda e: self.save_api_keys())
     
     def load_existing_api_keys(self):
-        """Load existing API keys from environment variables and pre-fill them"""
+        """Load existing API keys from Claude Code settings.json and pre-fill them"""
         try:
-            # Check user-level environment variables based on platform
-            user_auth_token = self.get_user_env_var('ANTHROPIC_AUTH_TOKEN')
-            user_base_url = self.get_user_env_var('ANTHROPIC_BASE_URL')
+            # Get settings from Claude Code settings.json
+            settings = self.get_claude_settings()
 
-            # Only update fields if they're empty AND if the environment variables are explicitly set
-            # Don't pre-fill anything if using subscription (no environment variables)
+            if 'env' not in settings:
+                return
+
+            env_vars = settings['env']
+            user_auth_token = env_vars.get('ANTHROPIC_AUTH_TOKEN', '').strip()
+            user_base_url = env_vars.get('ANTHROPIC_BASE_URL', '').strip()
+
+            # Only update fields if they're empty AND if the settings are explicitly set
+            # Don't pre-fill anything if using subscription (no settings)
 
             # Pre-fill z.ai key only if it's set and base_url explicitly points to z.ai
             if user_auth_token and user_base_url and 'z.ai' in user_base_url:
@@ -1277,7 +1342,7 @@ class ClaudeConfigSwitcher:
                     self.claude_key_entry.insert(0, user_auth_token)
 
             # Pre-fill custom configuration only if both auth token and base URL are set and it's not z.ai
-            elif user_auth_token and user_base_url and user_base_url.strip() and 'z.ai' not in user_base_url:
+            elif user_auth_token and user_base_url and user_base_url and 'z.ai' not in user_base_url:
                 if not self.custom_url_entry.get().strip():
                     self.custom_url_entry.delete(0, tk.END)
                     self.custom_url_entry.insert(0, user_base_url)
@@ -1286,8 +1351,7 @@ class ClaudeConfigSwitcher:
                     self.custom_key_entry.delete(0, tk.END)
                     self.custom_key_entry.insert(0, user_auth_token)
 
-
-        except Exception as e:
+        except Exception:
             # Silently fail if we can't load keys
             pass
 
@@ -1830,7 +1894,8 @@ class ClaudeConfigSwitcher:
                 'ANTHROPIC_DEFAULT_OPUS_MODEL',
                 'ANTHROPIC_DEFAULT_SONNET_MODEL',
                 'ANTHROPIC_DEFAULT_HAIKU_MODEL',
-                'ANTHROPIC_API_KEY'
+                'ANTHROPIC_API_KEY',
+                'API_TIMEOUT_MS'
             ]
 
             # Remove from Claude Code settings (highest priority cleanup)
@@ -2262,6 +2327,9 @@ class ClaudeConfigSwitcher:
         self.zai_frame.pack_forget()
         self.claude_frame.pack_forget()
         self.custom_frame.pack_forget()
+        # Also hide old environment variable frames
+        self.zai_env_frame.pack_forget()
+        self.custom_env_frame.pack_forget()
 
         # Show the selected frame
         if self.config_var.get() == "zai":
@@ -2271,10 +2339,10 @@ class ClaudeConfigSwitcher:
         elif self.config_var.get() == "custom":
             self.custom_frame.pack(fill=tk.X, pady=(0, 10))
 
-        # If environment variables are currently visible, update them
+        # If Claude settings are currently visible, update them
         if self.show_env_vars_var.get():
             # Schedule update after widgets are properly packed
-            self.root.after(100, self.update_env_vars_display)
+            self.root.after(100, self.update_universal_settings_display)
     
         
     def toggle_password_visibility(self):
@@ -2288,8 +2356,22 @@ class ClaudeConfigSwitcher:
             self.claude_key_entry.configure(show="*")
             self.custom_key_entry.configure(show="*")
 
+        # Update universal settings display if visible
+        if self.show_env_vars_var.get():
+            self.update_universal_settings_display()
+
+    def hide_universal_settings(self):
+        """Hide universal Claude settings display"""
+        self.universal_settings_frame.pack_forget()
+
+        # Always uncheck the main checkbox when hiding settings
+        # since the user explicitly clicked the hide button
+        self.show_env_vars_var.set(False)
+        # Restore original window height when settings are hidden
+        self._restore_original_window_height()
+
     def hide_env_vars(self, config_type):
-        """Hide environment variables for a specific configuration type"""
+        """Hide settings display for a specific configuration type"""
         if config_type == 'zai':
             self.zai_env_frame.pack_forget()
         elif config_type == 'custom':
@@ -2302,48 +2384,36 @@ class ClaudeConfigSwitcher:
         self._restore_original_window_height()
 
     def toggle_env_vars_visibility(self):
-        """Toggle environment variables display visibility"""
+        """Toggle Claude settings display visibility"""
         if self.show_env_vars_var.get():
-            # Show environment variable frames based on current configuration
-            if self.config_var.get() == "zai":
-                self.zai_env_frame.pack(fill=tk.X, pady=(0, 10))
-            elif self.config_var.get() == "custom":
-                self.custom_env_frame.pack(fill=tk.X, pady=(0, 10))
+            # Show universal settings frame (regardless of configuration)
+            self.universal_settings_frame.pack(fill=tk.X, pady=(0, 10))
 
-            # Update the display with current system values
+            # Update the display with current settings values
             # Try multiple times to ensure the update works
-            self.root.after(50, self.update_env_vars_display)
-            self.root.after(150, self.update_env_vars_display)
-            self.root.after(300, self.update_env_vars_display)  # Final retry
+            self.root.after(50, self.update_universal_settings_display)
+            self.root.after(150, self.update_universal_settings_display)
+            self.root.after(300, self.update_universal_settings_display)  # Final retry
 
-            # Adjust window height to accommodate environment variables
+            # Adjust window height to accommodate settings display
             self.root.after(200, self._adjust_window_height_for_env_vars)  # Allow widgets to render first
         else:
-            # Hide all environment variable frames
-            self.zai_env_frame.pack_forget()
-            self.custom_env_frame.pack_forget()
+            # Hide universal settings frame
+            self.universal_settings_frame.pack_forget()
 
             # Restore original window height
             self._restore_original_window_height()
 
     def get_current_env_vars(self):
-        """Get current environment variables from the system"""
+        """Get current environment variables from Claude Code settings.json"""
         env_vars = {}
         try:
-            # List of environment variables to check
-            var_names = [
-                'ANTHROPIC_AUTH_TOKEN',
-                'ANTHROPIC_BASE_URL',
-                'ANTHROPIC_DEFAULT_OPUS_MODEL',
-                'ANTHROPIC_DEFAULT_SONNET_MODEL',
-                'ANTHROPIC_DEFAULT_HAIKU_MODEL',
-                'ANTHROPIC_API_KEY'
-            ]
+            # Get settings from Claude Code settings.json
+            settings = self.get_claude_settings()
 
-            for var_name in var_names:
-                value = self.get_user_env_var(var_name)
-                if value:
-                    env_vars[var_name] = value
+            # Extract environment variables from settings
+            if 'env' in settings:
+                env_vars = {k: v for k, v in settings['env'].items() if v}
 
         except Exception:
             pass
@@ -2351,7 +2421,7 @@ class ClaudeConfigSwitcher:
         return env_vars
 
     def update_env_vars_display(self):
-        """Update the environment variables display with current system values"""
+        """Update the environment variables display with current settings.json values"""
         env_vars = self.get_current_env_vars()
 
         # Update z.ai environment variables if that frame is visible
@@ -2388,6 +2458,28 @@ class ClaudeConfigSwitcher:
 
                 label.configure(text=display_value)
 
+    def update_universal_settings_display(self):
+        """Update the universal Claude settings display with current settings.json values"""
+        env_vars = self.get_current_env_vars()
+
+        # Update universal settings display
+        for var_name, label in self.universal_value_labels.items():
+            value = env_vars.get(var_name, '')
+
+            if value:
+                # Mask sensitive values for display
+                if 'TOKEN' in var_name or 'KEY' in var_name:
+                    if self.show_password_var.get():
+                        display_value = value[:20] + "..." if len(value) > 20 else value
+                    else:
+                        display_value = "***"
+                else:
+                    display_value = value
+            else:
+                display_value = "Not set"
+
+            label.configure(text=display_value)
+
     def close_application(self):
         """Properly close the application"""
         self.root.destroy()
@@ -2409,39 +2501,33 @@ class ClaudeConfigSwitcher:
         self.root.update_idletasks()
     
     def check_current_status(self):
-        """Check current configuration from both environment variables and Claude Code settings"""
+        """Check current configuration from Claude Code settings.json"""
         try:
-            # First check Claude Code settings.json (highest priority)
+            # Check Claude Code settings.json
             claude_settings = self.get_claude_settings()
             claude_auth_token = None
             claude_base_url = None
-            
+
             if 'env' in claude_settings:
                 claude_auth_token = claude_settings['env'].get('ANTHROPIC_AUTH_TOKEN')
                 claude_base_url = claude_settings['env'].get('ANTHROPIC_BASE_URL')
-            
-            # Fall back to environment variables if settings.json doesn't have the config
-            if not claude_base_url:
-                claude_base_url = self.get_user_env_var('ANTHROPIC_BASE_URL')
-            if not claude_auth_token:
-                claude_auth_token = self.get_user_env_var('ANTHROPIC_AUTH_TOKEN')
 
             if claude_base_url and 'z.ai' in claude_base_url:
                 status_text = "✓ Currently using z.ai API\n"
-                status_text += f"(Configured in Claude Code settings.json)" if claude_settings.get('env') else f"(Configured via environment variables)"
+                status_text += "(Configured in Claude Code settings.json)"
                 self.status_label.configure(text=status_text, fg=self.success_color)
             elif claude_auth_token and not claude_base_url:
                 status_text = "✓ Currently using Claude API Key\n"
-                status_text += f"(Configured in Claude Code settings.json)" if claude_settings.get('env') else f"(Configured via environment variables)"
+                status_text += "(Configured in Claude Code settings.json)"
                 self.status_label.configure(text=status_text, fg=self.success_color)
             elif not claude_auth_token and not claude_base_url:
                 status_text = "✓ Currently using Claude Subscription\n"
-                status_text += "(No environment variables configured)"
+                status_text += "(No custom settings configured)"
                 self.status_label.configure(text=status_text, fg=self.success_color)
             elif claude_base_url and claude_auth_token:
                 status_text = f"✓ Currently using Custom Base URL\n"
                 status_text += f"Base URL: {claude_base_url}\n"
-                status_text += f"(Configured in Claude Code settings.json)" if claude_settings.get('env') else f"(Configured via environment variables)"
+                status_text += "(Configured in Claude Code settings.json)"
                 self.status_label.configure(text=status_text, fg=self.success_color)
             else:
                 status_text = "⚠ No configuration is currently set"
@@ -2480,45 +2566,30 @@ class ClaudeConfigSwitcher:
                     self.root.after(0, self.hide_loading)
                     return
 
-                # Set z.ai environment variables (all at User level to avoid admin requirements)
-                env_vars = [
-                    ('ANTHROPIC_AUTH_TOKEN', zai_key),
-                    ('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/anthropic'),
-                    ('ANTHROPIC_DEFAULT_OPUS_MODEL', 'GLM-4.6'),
-                    ('ANTHROPIC_DEFAULT_SONNET_MODEL', 'GLM-4.6'),
-                    ('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'GLM-4.6')
-                ]
+                # Configure z.ai settings (only in settings.json)
+                env_vars = {
+                    'ANTHROPIC_AUTH_TOKEN': zai_key,
+                    'ANTHROPIC_BASE_URL': 'https://api.z.ai/api/anthropic',
+                    'ANTHROPIC_DEFAULT_OPUS_MODEL': 'GLM-4.6',
+                    'ANTHROPIC_DEFAULT_SONNET_MODEL': 'GLM-4.6',
+                    'ANTHROPIC_DEFAULT_HAIKU_MODEL': 'GLM-4.6',
+                    'API_TIMEOUT_MS': '3000000'
+                }
 
-                for var_name, var_value in env_vars:
-                    success, output = self.set_user_env_var(var_name, var_value)
-                    if not success:
-                        self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to set environment variable:\n{msg}"))
-                        self.root.after(0, self.hide_loading)
-                        return
-                
-                # Then update Claude Code settings.json
-                env_dict = {var_name: var_value for var_name, var_value in env_vars}
-                success, output = self.update_claude_settings(env_dict)
+                # Update only Claude Code settings.json
+                success, output = self.update_claude_settings(env_vars)
                 if not success:
                     self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to update Claude Code settings:\n{msg}"))
                     self.root.after(0, self.hide_loading)
                     return
 
-                restart_message = "IMPORTANT: You must close and reopen VS Code or any application using Claude Code for changes to take effect.\n"
-                if IS_LINUX:
-                    restart_message += "You may also need to run 'source ~/.bashrc' or restart your terminal."
-                elif IS_MACOS:
-                    restart_message += "You may also need to run 'source ~/.zshrc' or restart your terminal."
-                else:
-                    restart_message += "If using terminal only, close and reopen the terminal."
-
                 self.root.after(0, lambda: self.show_success_dialog("Success",
-                                   f"Z.ai configuration applied successfully!\n\nEnvironment variables and Claude Code settings.json updated.\n\n{restart_message}"))
+                                   "Z.ai configuration applied successfully!\n\nClaude Code settings.json updated.\n\nIMPORTANT: You must restart Claude Code for changes to take effect."))
 
             elif self.config_var.get() == "claude":
                 # Apply Claude configuration
                 if self.claude_mode_var.get() == "subscription":
-                    # Remove all environment variables to use subscription
+                    # Clear all Claude settings from settings.json to use subscription
                     env_vars_to_remove = [
                         'ANTHROPIC_AUTH_TOKEN',
                         'ANTHROPIC_BASE_URL',
@@ -2528,14 +2599,7 @@ class ClaudeConfigSwitcher:
                         'ANTHROPIC_API_KEY'
                     ]
 
-                    for var_name in env_vars_to_remove:
-                        success, output = self.set_user_env_var(var_name, '')
-                        if not success:
-                            self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to remove environment variable:\n{msg}"))
-                            self.root.after(0, self.hide_loading)
-                            return
-
-                    # Also clear from Claude Code settings
+                    # Clear from Claude Code settings only
                     success, output = self.update_claude_settings({var: '' for var in env_vars_to_remove})
                     if not success:
                         self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to update Claude Code settings:\n{msg}"))
@@ -2543,7 +2607,7 @@ class ClaudeConfigSwitcher:
                         return
 
                     self.root.after(0, lambda: self.show_success_dialog("Success",
-                                       "Claude Subscription configuration applied successfully!\n\nAll environment variables removed to use your official Claude subscription.\n\nIMPORTANT: You must close and reopen VS Code or any application using Claude Code for changes to take effect."))
+                                       "Claude Subscription configuration applied successfully!\n\nAll settings cleared from Claude Code settings.json to use your official Claude subscription.\n\nIMPORTANT: You must restart Claude Code for changes to take effect."))
 
                 else:
                     # API mode
@@ -2554,34 +2618,20 @@ class ClaudeConfigSwitcher:
                         self.root.after(0, self.hide_loading)
                         return
 
-                    # Set Claude API environment variables
-                    env_vars = [
-                        ('ANTHROPIC_AUTH_TOKEN', claude_key)
-                    ]
+                    # Configure Claude API settings (only in settings.json)
+                    env_vars = {
+                        'ANTHROPIC_AUTH_TOKEN': claude_key
+                    }
 
-                    for var_name, var_value in env_vars:
-                        success, output = self.set_user_env_var(var_name, var_value)
-                        if not success:
-                            self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to set environment variable:\n{msg}"))
-                            self.root.after(0, self.hide_loading)
-                            return
-
-                    # Update Claude Code settings
-                    env_dict = {var_name: var_value for var_name, var_value in env_vars}
-                    success, output = self.update_claude_settings(env_dict)
+                    # Update only Claude Code settings
+                    success, output = self.update_claude_settings(env_vars)
                     if not success:
                         self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to update Claude Code settings:\n{msg}"))
                         self.root.after(0, self.hide_loading)
                         return
 
-                    restart_message = "IMPORTANT: You must close and reopen VS Code or any application using Claude Code for changes to take effect.\n"
-                    if IS_LINUX:
-                        restart_message += "You may also need to run 'source ~/.bashrc' or restart your terminal."
-                    else:
-                        restart_message += "If using terminal only, close and reopen the terminal."
-
                     self.root.after(0, lambda: self.show_success_dialog("Success",
-                                       f"Claude API configuration applied successfully!\n\nEnvironment variables and Claude Code settings.json updated.\n\n{restart_message}"))
+                                       "Claude API configuration applied successfully!\n\nClaude Code settings.json updated.\n\nIMPORTANT: You must restart Claude Code for changes to take effect."))
 
             elif self.config_var.get() == "custom":
                 # Apply custom configuration
@@ -2598,38 +2648,21 @@ class ClaudeConfigSwitcher:
                     self.root.after(0, self.hide_loading)
                     return
 
-                # Set custom environment variables
-                env_vars = [
-                    ('ANTHROPIC_AUTH_TOKEN', custom_key),
-                    ('ANTHROPIC_BASE_URL', custom_url)
-                ]
+                # Configure custom settings (only in settings.json)
+                env_vars = {
+                    'ANTHROPIC_AUTH_TOKEN': custom_key,
+                    'ANTHROPIC_BASE_URL': custom_url
+                }
 
-                # First update environment variables
-                for var_name, var_value in env_vars:
-                    success, output = self.set_user_env_var(var_name, var_value)
-                    if not success:
-                        self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to set environment variable:\n{msg}"))
-                        self.root.after(0, self.hide_loading)
-                        return
-                
-                # Then update Claude Code settings.json
-                env_dict = {var_name: var_value for var_name, var_value in env_vars}
-                success, output = self.update_claude_settings(env_dict)
+                # Update only Claude Code settings
+                success, output = self.update_claude_settings(env_vars)
                 if not success:
                     self.root.after(0, lambda msg=output: messagebox.showerror("Error", f"Failed to update Claude Code settings:\n{msg}"))
                     self.root.after(0, self.hide_loading)
                     return
 
-                restart_message = "IMPORTANT: You must close and reopen VS Code or any application using Claude Code for changes to take effect.\n"
-                if IS_LINUX:
-                    restart_message += "You may also need to run 'source ~/.bashrc' or restart your terminal."
-                elif IS_MACOS:
-                    restart_message += "You may also need to run 'source ~/.zshrc' or restart your terminal."
-                else:
-                    restart_message += "If using terminal only, close and reopen the terminal."
-
                 self.root.after(0, lambda: self.show_success_dialog("Success",
-                                   f"Custom configuration applied successfully!\n\nEnvironment variables and Claude Code settings.json updated.\n\n{restart_message}"))
+                                   "Custom configuration applied successfully!\n\nClaude Code settings.json updated.\n\nIMPORTANT: You must restart Claude Code for changes to take effect."))
 
 
             # Save API keys after applying configuration

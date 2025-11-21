@@ -17,6 +17,16 @@ Mix and match models based on your needs - use GLM-4.6 for Opus (complex tasks) 
 
 ## Recent Updates
 
+### 🎉 Version 1.0 Stable Release (11/20/25)
+Claude Code EZ Switch has reached its stable v1.0 release! This milestone includes:
+- ✅ **Stable and tested core functionality**
+- ✅ **Windows executable (.exe) available for easy installation**
+- ✅ **Cross-platform compatibility verified**
+- ✅ **Complete feature set with advanced model selection**
+
+### 📥 Download Windows Executable
+Windows users can now download the pre-built `.exe` file from the [GitHub Releases page](https://github.com/techcow2/claude-code-ez-switch/releases/tag/v1.0) - no Python installation required!
+
 ### Windows Dependency Fix (11/20/25)
 Fixed a critical error that was preventing the app from opening on Windows due to an unnecessary dependency that was present. The application now launches properly on all Windows systems.
 
@@ -55,16 +65,28 @@ The app no longer modifies your system environment variables or shell configurat
 - **Settings-Only**: Modifies only Claude Code settings.json, never system environment
 
 ## Requirements
+### Option 1: Windows Executable (Recommended for Windows)
+- No Python installation required
+- Just download and run the .exe file
+
+### Option 2: Python Source
 - Python 3.7+
 - Windows, Linux, or macOS
 - Claude Code CLI
 
 ## Platform Support
-- **Windows**: Full support
-- **Linux**: Full support
-- **macOS**: Full support
+- **Windows**: Full support (including pre-built .exe)
+- **Linux**: Full support (Python source)
+- **macOS**: Full support (Python source)
 
-## Quick Start
+## Installation
+
+### Option 1: Windows Executable (Easiest)
+1. Go to the [GitHub Releases page](https://github.com/techcow2/claude-code-ez-switch/releases/tag/v1.0)
+2. Download `claude-code-ez-switch-v1.0.exe`
+3. Run the executable - no installation needed!
+
+### Option 2: Python Source
 ```bash
 git clone https://github.com/techcow2/claude-code-ez-switch.git
 cd claude-code-ez-switch
@@ -72,6 +94,16 @@ python ezswitch.py
 ```
 
 ## Usage
+
+### For Windows Executable Users:
+1. Double-click `claude-code-ez-switch-v1.0.exe` to launch the app
+2. Select **Z.ai**, **Claude Subscription**, or **Custom**
+3. Enter your API key and base URL (if applicable)
+4. **For Z.ai users**: Choose your preferred GLM models for each tier (Opus, Sonnet, Haiku)
+5. Click **Apply Configuration**
+6. **Just restart Claude Code** - no terminal restart needed!
+
+### For Python Source Users:
 1. Launch the app with `python ezswitch.py`
 2. Select **Z.ai**, **Claude Subscription**, or **Custom**
 3. Enter your API key and base URL (if applicable)

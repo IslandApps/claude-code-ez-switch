@@ -1,5 +1,5 @@
 <div align="left">
-  <img src="https://raw.githubusercontent.com/techcow2/claude-code-ez-switch/refs/heads/master/screenshot/ccez.png" alt="Claude Code EZ Switch" style="margin-left: -20px;">
+  <img src="https://raw.githubusercontent.com/techcow2/claude-code-ez-switch/refs/heads/master/screenshot/ccez.png" alt="Claude Code EZ Switch" style="margin-left: -40px;">
 </div>
 
 <br>

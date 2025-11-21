@@ -18,7 +18,7 @@ Mix and match models based on your needs - use GLM-4.6 for Opus (complex tasks) 
 ## Recent Updates
 
 ### Windows Dependency Fix (11/20/25)
-Fixed a critical error that was preventing the app from opening on Windows due to missing dependency issues. The application now launches properly on all Windows systems.
+Fixed a critical error that was preventing the app from opening on Windows due to an unnecessary dependency that was present. The application now launches properly on all Windows systems.
 
 ---
 

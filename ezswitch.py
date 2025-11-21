@@ -123,10 +123,11 @@ class ClaudeConfigSwitcher:
             self.root.geometry("600x1000")
             self.root.resizable(False, False)
 
-        # Remove window decorations and create custom title bar
+        # Keep native window decorations (title bar with minimize/maximize/close buttons)
         # Platform-specific window handling
         if IS_WINDOWS:
-            self.root.overrideredirect(True)
+            # Keep native window decorations on Windows
+            pass
         elif IS_MACOS:
             # On macOS, use native window decorations for best integration
             # Don't override redirect to maintain proper macOS behavior
@@ -136,10 +137,7 @@ class ClaudeConfigSwitcher:
             # Keep native window decorations for better compatibility
             pass
 
-        # Variables for window dragging
-        self.start_x = None
-        self.start_y = None
-
+  
         # Set window styles
         self.set_window_style()
 
@@ -289,23 +287,7 @@ class ClaudeConfigSwitcher:
             # For other platforms, just use basic borderless mode
             pass
 
-    def start_move(self, event):
-        """Start moving the window"""
-        self.start_x = event.x
-        self.start_y = event.y
-
-    def on_move(self, event):
-        """Handle window movement"""
-        if self.start_x and self.start_y:
-            x = self.root.winfo_x() + (event.x - self.start_x)
-            y = self.root.winfo_y() + (event.y - self.start_y)
-            self.root.geometry(f"+{x}+{y}")
-
-    def stop_move(self, event):
-        """Stop moving the window"""
-        self.start_x = None
-        self.start_y = None
-
+    
     def minimize_window(self):
         """Minimize the window by hiding it and showing a restore notification"""
         try:
@@ -402,36 +384,8 @@ class ClaudeConfigSwitcher:
         self.close_application()
         
     def create_widgets(self):
-        # Custom title bar with built-in top padding
-        title_bar = tk.Frame(self.root, bg=self.bg_color, relief=tk.RAISED, bd=0)
-        title_bar.pack(fill=tk.X, side=tk.TOP)
-
-        # Main title content frame
-        title_content = tk.Frame(title_bar, bg=self.bg_color, height=15)
-        title_content.pack(fill=tk.X, side=tk.TOP)
-        title_content.pack_propagate(False)
-
-        # Bind mouse events for window dragging on the entire title bar
-        title_bar.bind('<Button-1>', self.start_move)
-        title_bar.bind('<B1-Motion>', self.on_move)
-        title_bar.bind('<ButtonRelease-1>', self.stop_move)
-        title_content.bind('<Button-1>', self.start_move)
-        title_content.bind('<B1-Motion>', self.on_move)
-        title_content.bind('<ButtonRelease-1>', self.stop_move)
-
-        # Title text
-        title_frame = tk.Frame(title_content, bg=self.bg_color)
-        title_frame.pack(side=tk.LEFT, padx=10, pady=5)
-
-    
-        # Window controls container
-        controls_frame = tk.Frame(title_content, bg=self.bg_color)
-        controls_frame.pack(side=tk.RIGHT, padx=5, pady=2)
-
-  
-  
-        # Main container
-        main_frame = tk.Frame(self.root, bg=self.bg_color, padx=30, pady=10)
+        # Main container with slightly more padding since we don't have custom title bar
+        main_frame = tk.Frame(self.root, bg=self.bg_color, padx=30, pady=20)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         # Content frame (everything except footer)
@@ -1431,155 +1385,8 @@ class ClaudeConfigSwitcher:
             # Silently fail if we can't load model settings
             pass
 
-    def get_user_env_var(self, var_name):
-        """Get user-level environment variable based on platform"""
-        try:
-            # First check current process environment (most reliable for what's actually available)
-            current_value = os.environ.get(var_name, '').strip()
-            if current_value:
-                return current_value
-
-            if IS_WINDOWS:
-                # Use PowerShell for Windows
-                result = subprocess.run(
-                    ['powershell', '-Command',
-                     f"[System.Environment]::GetEnvironmentVariable('{var_name}', 'User')"],
-                    capture_output=True, text=True, timeout=5
-                )
-                return result.stdout.strip()
-            elif IS_LINUX or IS_MACOS:
-                # For Linux and macOS, check in common shell configuration files with better error handling
-                home_dir = Path.home()
-                if IS_MACOS:
-                    # macOS-specific shell configuration files (Zsh is default)
-                    config_files = [
-                        home_dir / '.zshrc',
-                        home_dir / '.zprofile',
-                        home_dir / '.bash_profile',
-                        home_dir / '.bashrc',
-                        home_dir / '.profile'
-                    ]
-                else:
-                    # Linux shell configuration files
-                    config_files = [
-                        home_dir / '.bashrc',
-                        home_dir / '.profile',
-                        home_dir / '.zshrc',
-                        home_dir / '.bash_profile'
-                    ]
-
-                # Check each file for the environment variable
-                for config_file in config_files:
-                    try:
-                        if config_file.exists() and config_file.is_file():
-                            with open(config_file, 'r', encoding='utf-8') as f:
-                                content = f.read()
-                                # Look for export statements
-                                for line in content.splitlines():
-                                    line = line.strip()
-                                    if line.startswith(f'export {var_name}='):
-                                        # Extract value after = and strip quotes
-                                        value = line.split('=', 1)[1].strip()
-                                        # Remove surrounding quotes if present
-                                        if value.startswith('"') and value.endswith('"'):
-                                            value = value[1:-1]
-                                        elif value.startswith("'") and value.endswith("'"):
-                                            value = value[1:-1]
-                                        return value
-                    except (PermissionError, IOError, UnicodeDecodeError):
-                        continue
-
-            # Final fallback to empty string if nothing found
-            return ''
-
-        except Exception:
-            return ''
-
-    def set_user_env_var(self, var_name, value):
-        """Set user-level environment variable based on platform"""
-        try:
-            if IS_WINDOWS:
-                # Use PowerShell for Windows
-                command = f"[System.Environment]::SetEnvironmentVariable('{var_name}', '{value}', 'User')"
-                success, output = self.run_powershell_command(command)
-                return success, output
-            elif IS_LINUX or IS_MACOS:
-                # For Linux and macOS, use a more robust approach with better error handling
-                home_dir = Path.home()
-
-                # Try multiple shell config files in order of preference
-                if IS_MACOS:
-                    # macOS-specific shell configuration files (Zsh is default)
-                    config_files = [
-                        home_dir / '.zshrc',
-                        home_dir / '.zprofile',
-                        home_dir / '.bash_profile',
-                        home_dir / '.bashrc',
-                        home_dir / '.profile'
-                    ]
-                else:
-                    # Linux shell configuration files
-                    config_files = [
-                        home_dir / '.bashrc',
-                        home_dir / '.profile',
-                        home_dir / '.zshrc'
-                    ]
-                
-                # Find the first existing/writable config file
-                target_file = None
-                for config_file in config_files:
-                    try:
-                        # Test if we can write to this file
-                        if config_file.exists():
-                            # Test write permission
-                            with open(config_file, 'a') as f:
-                                pass
-                            target_file = config_file
-                            break
-                        else:
-                            # Create the file if it doesn't exist
-                            with open(config_file, 'w') as f:
-                                f.write("# Claude Code EZ Switch Environment Variables\n")
-                            target_file = config_file
-                            break
-                    except (PermissionError, IOError):
-                        continue
-                
-                if not target_file:
-                    return False, "No writable shell configuration file found"
-                
-                # Read existing content with error handling
-                existing_lines = []
-                try:
-                    with open(target_file, 'r', encoding='utf-8') as f:
-                        existing_lines = f.readlines()
-                except Exception:
-                    existing_lines = []
-                
-                # Remove existing export for this variable (more robust matching)
-                updated_lines = []
-                var_pattern = f'export {var_name}='
-                for line in existing_lines:
-                    if not line.strip().startswith(var_pattern):
-                        updated_lines.append(line)
-                
-                # Add the new export at the end
-                updated_lines.append(f'\n# Added by Claude Code EZ Switch\n')
-                updated_lines.append(f'export {var_name}="{value}"\n')
-                
-                # Write back to file with error handling
-                try:
-                    with open(target_file, 'w', encoding='utf-8') as f:
-                        f.writelines(updated_lines)
-                    return True, f"Environment variable {var_name} set in {target_file.name}"
-                except Exception as e:
-                    return False, f"Failed to write to {target_file}: {e}"
-
-            return False, "Unsupported platform for setting environment variables"
-
-        except Exception as e:
-            return False, f"Unexpected error: {str(e)}"
-
+    
+    
     def get_claude_settings(self):
         """Get current Claude Code settings.json content"""
         try:
@@ -1589,7 +1396,27 @@ class ClaudeConfigSwitcher:
             else:
                 # Return empty settings if file doesn't exist
                 return {}
-        except Exception:
+        except (FileNotFoundError, PermissionError) as e:
+            # Log file access errors but don't crash the app
+            print(f"Warning: Could not access Claude settings file {self.claude_settings_file}: {e}")
+            return {}
+        except json.JSONDecodeError as e:
+            # Log JSON parsing errors
+            print(f"Warning: Invalid JSON in Claude settings file {self.claude_settings_file}: {e}")
+            return {}
+        except UnicodeDecodeError as e:
+            # Log encoding errors
+            print(f"Warning: Encoding error reading Claude settings file {self.claude_settings_file}: {e}")
+            # Try with different encoding as fallback
+            try:
+                with open(self.claude_settings_file, 'r', encoding='utf-8-sig') as f:
+                    return json.load(f)
+            except Exception:
+                print(f"Warning: Could not read Claude settings file with any encoding")
+                return {}
+        except Exception as e:
+            # Log any other unexpected errors
+            print(f"Warning: Unexpected error reading Claude settings file {self.claude_settings_file}: {e}")
             return {}
 
     def update_claude_settings(self, env_vars):
@@ -1647,82 +1474,7 @@ class ClaudeConfigSwitcher:
         except Exception as e:
             return False, f"Failed to remove from Claude settings: {str(e)}"
 
-    def remove_user_env_var(self, var_name):
-        """Remove user-level environment variable based on platform"""
-        try:
-            # Also clear from current process environment
-            if var_name in os.environ:
-                del os.environ[var_name]
-
-            if IS_WINDOWS:
-                # Use PowerShell to remove environment variable
-                command = f"[System.Environment]::SetEnvironmentVariable('{var_name}', '', 'User')"
-                result = subprocess.run(['powershell', '-Command', command],
-                                      capture_output=True, text=True, timeout=10)
-                if result.returncode == 0:
-                    return True, f"Removed {var_name} from Windows environment variables"
-                else:
-                    return False, f"Failed to remove {var_name}: {result.stderr}"
-
-            elif IS_LINUX or IS_MACOS:
-                # For Linux and macOS, remove from shell configuration files
-                home_dir = Path.home()
-                if IS_MACOS:
-                    # macOS-specific shell configuration files (Zsh is default)
-                    config_files = [
-                        home_dir / '.zshrc',
-                        home_dir / '.zprofile',
-                        home_dir / '.bash_profile',
-                        home_dir / '.bashrc',
-                        home_dir / '.profile'
-                    ]
-                else:
-                    # Linux shell configuration files
-                    config_files = [
-                        home_dir / '.bashrc',
-                        home_dir / '.profile',
-                        home_dir / '.zshrc',
-                        home_dir / '.bash_profile'
-                    ]
-
-                files_modified = []
-                for config_file in config_files:
-                    try:
-                        if config_file.exists() and config_file.is_file():
-                            # Read the file
-                            with open(config_file, 'r', encoding='utf-8') as f:
-                                lines = f.readlines()
-
-                            # Filter out lines that export this variable
-                            new_lines = []
-                            removed_line = False
-                            for line in lines:
-                                stripped_line = line.strip()
-                                # Check if this line exports the target variable
-                                if stripped_line.startswith(f'export {var_name}='):
-                                    removed_line = True
-                                    # Skip this line (don't add to new_lines)
-                                    continue
-                                else:
-                                    new_lines.append(line)
-
-                            # If we removed any lines, write the file back
-                            if removed_line:
-                                with open(config_file, 'w', encoding='utf-8') as f:
-                                    f.writelines(new_lines)
-                                files_modified.append(config_file.name)
-
-                    except (PermissionError, IOError, UnicodeDecodeError):
-                        continue
-
-                if files_modified:
-                    return True, f"Removed {var_name} from {', '.join(files_modified)}"
-                else:
-                    return True, f"No {var_name} found in shell configuration files"
-
-        except Exception as e:
-            return False, f"Error removing environment variable {var_name}: {e}"
-
+    
     def load_saved_api_keys(self):
         """Load API keys from the persistent storage file"""
         try:
@@ -1972,7 +1724,7 @@ class ClaudeConfigSwitcher:
         self.show_inline_message(f"Z.ai key '{selected_name}' deleted successfully!", "success")
 
     def _cleanup_api_key_configuration(self):
-        """Clean up API key configuration from environment variables and settings"""
+        """Clean up API key configuration from settings.json"""
         try:
             # All ANTHROPIC-related variables that might be set
             cleanup_vars = [
@@ -1985,12 +1737,8 @@ class ClaudeConfigSwitcher:
                 'API_TIMEOUT_MS'
             ]
 
-            # Remove from Claude Code settings (highest priority cleanup)
+            # Remove from Claude Code settings
             self.remove_claude_settings_vars(cleanup_vars)
-
-            # Remove from shell environment variables
-            for var_name in cleanup_vars:
-                self.remove_user_env_var(var_name)
 
         except Exception:
             pass
@@ -2498,12 +2246,18 @@ class ClaudeConfigSwitcher:
             # Get settings from Claude Code settings.json
             settings = self.get_claude_settings()
 
+            # Debug: Print the raw settings for troubleshooting
+            if IS_WINDOWS and settings:
+                print(f"Debug: Loaded Claude settings: {list(settings.keys())}")
+                if 'env' in settings:
+                    print(f"Debug: Found env vars: {list(settings['env'].keys())}")
+
             # Extract environment variables from settings
             if 'env' in settings:
                 env_vars = {k: v for k, v in settings['env'].items() if v}
 
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Warning: Error getting current environment variables: {e}")
 
         return env_vars
 
@@ -2549,11 +2303,20 @@ class ClaudeConfigSwitcher:
         """Update the universal Claude settings display with current settings.json values"""
         env_vars = self.get_current_env_vars()
 
+        # Debug: Print what we're about to display
+        if IS_WINDOWS:
+            print(f"Debug: Updating universal display with {len(env_vars)} environment variables")
+            print(f"Debug: Universal labels available: {list(self.universal_value_labels.keys())}")
+
         # Update universal settings display
         for var_name, label in self.universal_value_labels.items():
             value = env_vars.get(var_name, '')
 
             if value:
+                # Debug: Print found values on Windows
+                if IS_WINDOWS:
+                    print(f"Debug: Found value for {var_name}: {'[REDACTED]' if 'TOKEN' in var_name or 'KEY' in var_name else value}")
+
                 # Mask sensitive values for display
                 if 'TOKEN' in var_name or 'KEY' in var_name:
                     if self.show_password_var.get():

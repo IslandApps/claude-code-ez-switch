@@ -2,6 +2,26 @@
 
 A simple GUI application for managing Claude Code API configurations - easily switch between Claude subscription, Z.ai API, and custom endpoints.
 
+## Table of Contents
+
+- [New Feature: Advanced Model Selection for Z.ai](#new-feature-advanced-model-selection-for-zai)
+- [Screenshot](#screenshot)
+- [Recent Updates](#recent-updates)
+- [Important Update - Settings.json Only](#important-update---settingsjson-only)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Platform Support](#platform-support)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Pro Tips](#pro-tips)
+- [Model Selection Guide](#model-selection-guide)
+- [How It Works](#how-it-works)
+  - [Z.ai Mode](#zai-mode)
+  - [Claude Mode](#claude-mode)
+  - [Custom Mode](#custom-mode)
+  - [Technical Details](#technical-details)
+- [License](#license)
+
 ## New Feature: Advanced Model Selection for Z.ai
 
 Now you can choose specific GLM models for each Claude tier when using Z.ai:

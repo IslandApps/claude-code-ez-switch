@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/techcow2/claude-code-ez-switch/refs/heads/master/screenshot/ccez.png" alt="Claude Code EZ Switch">
+  <img src="https://raw.githubusercontent.com/techcow2/claude-code-ez-switch/refs/heads/master/screenshot/ccez.png" alt="Claude Code EZ Switch" onclick="return false;">
 </p>
 
 A simple GUI application for managing Claude Code API configurations - easily switch between Claude subscription, Z.ai API, and custom endpoints.

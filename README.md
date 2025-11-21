@@ -150,7 +150,9 @@ python ezswitch.py
 Configures these settings in `~/.claude/settings.json`:
 - `ANTHROPIC_AUTH_TOKEN`: Your Z.ai API key
 - `ANTHROPIC_BASE_URL`: `https://api.z.ai/api/anthropic`
-- `ANTHROPIC_DEFAULT_*_MODEL`: Your selected GLM model for each tier
+- `ANTHROPIC_DEFAULT_OPUS_MODEL`: Your selected GLM model for Opus tier
+- `ANTHROPIC_DEFAULT_SONNET_MODEL`: Your selected GLM model for Sonnet tier
+- `ANTHROPIC_DEFAULT_HAIKU_MODEL`: Your selected GLM model for Haiku tier
 - `API_TIMEOUT_MS`: `3000000` (50-minute timeout)
 
 #### Model Selection Feature

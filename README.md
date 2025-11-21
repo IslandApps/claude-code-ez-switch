@@ -11,6 +11,10 @@ Now you can choose specific GLM models for each Claude tier when using Z.ai:
 
 Mix and match models based on your needs - use GLM-4.6 for Opus (complex tasks) and GLM-4.5-Air for Haiku (quick responses)!
 
+## Screenshot
+
+<img src="https://raw.githubusercontent.com/techcow2/claude-code-ez-switch/refs/heads/master/screenshot/screenshot.png" alt="Claude Code EZ Switch Screenshot" width="450">
+
 ## Important Update - Settings.json Only
 
 **Claude Code EZ Switch now works completely differently!**

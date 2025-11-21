@@ -6,7 +6,6 @@ import sys
 import threading
 import json
 from pathlib import Path
-from PIL import Image, ImageTk
 import platform
 
 # Platform detection and module imports

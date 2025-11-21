@@ -968,6 +968,49 @@ class ClaudeConfigSwitcher:
                                 command=self.save_current_zai_key)
         save_key_btn.pack(fill=tk.X, padx=15, pady=(0, 10))
 
+        # Model selection section
+        model_selection_label = ttk.Label(self.zai_frame, text="Model Selection:")
+        model_selection_label.pack(anchor=tk.W, padx=15, pady=(10, 5))
+
+        # Create a frame for model selection dropdowns
+        model_frame = tk.Frame(self.zai_frame, bg=self.entry_bg)
+        model_frame.pack(fill=tk.X, padx=15, pady=(0, 10))
+
+        # Define available GLM models
+        self.available_models = ["GLM-4.6", "GLM-4.5", "GLM-4.5-Air"]
+
+        # Opus Model Selection
+        opus_label = ttk.Label(model_frame, text="Opus Model:")
+        opus_label.grid(row=0, column=0, sticky=tk.W, pady=(2, 5))
+
+        self.zai_opus_model_var = tk.StringVar(value="GLM-4.6")
+        self.zai_opus_combo = ttk.Combobox(model_frame, textvariable=self.zai_opus_model_var,
+                                           values=self.available_models, state="readonly", width=20)
+        self.zai_opus_combo.grid(row=0, column=1, sticky=tk.W, padx=(10, 0), pady=(2, 5))
+
+        # Sonnet Model Selection
+        sonnet_label = ttk.Label(model_frame, text="Sonnet Model:")
+        sonnet_label.grid(row=1, column=0, sticky=tk.W, pady=(2, 5))
+
+        self.zai_sonnet_model_var = tk.StringVar(value="GLM-4.6")
+        self.zai_sonnet_combo = ttk.Combobox(model_frame, textvariable=self.zai_sonnet_model_var,
+                                             values=self.available_models, state="readonly", width=20)
+        self.zai_sonnet_combo.grid(row=1, column=1, sticky=tk.W, padx=(10, 0), pady=(2, 5))
+
+        # Haiku Model Selection
+        haiku_label = ttk.Label(model_frame, text="Haiku Model:")
+        haiku_label.grid(row=2, column=0, sticky=tk.W, pady=(2, 5))
+
+        self.zai_haiku_model_var = tk.StringVar(value="GLM-4.6")
+        self.zai_haiku_combo = ttk.Combobox(model_frame, textvariable=self.zai_haiku_model_var,
+                                            values=self.available_models, state="readonly", width=20)
+        self.zai_haiku_combo.grid(row=2, column=1, sticky=tk.W, padx=(10, 0), pady=(2, 5))
+
+        # Bind combobox changes to update function
+        self.zai_opus_combo.bind('<<ComboboxSelected>>', lambda e: self.update_zai_env_display())
+        self.zai_sonnet_combo.bind('<<ComboboxSelected>>', lambda e: self.update_zai_env_display())
+        self.zai_haiku_combo.bind('<<ComboboxSelected>>', lambda e: self.update_zai_env_display())
+
         # Initialize storage for multiple keys
         self.zai_keys = {}  # Format: {"name": "key"}
         self.current_zai_key_name = None
@@ -1351,8 +1394,42 @@ class ClaudeConfigSwitcher:
                     self.custom_key_entry.delete(0, tk.END)
                     self.custom_key_entry.insert(0, user_auth_token)
 
+            # Load model settings if z.ai configuration is detected
+            if user_auth_token and user_base_url and 'z.ai' in user_base_url:
+                self.load_model_settings(env_vars)
+
         except Exception:
             # Silently fail if we can't load keys
+            pass
+
+    def load_model_settings(self, env_vars):
+        """Load model settings from environment variables and update dropdowns"""
+        try:
+            # Get current model settings from environment variables
+            opus_model = env_vars.get('ANTHROPIC_DEFAULT_OPUS_MODEL', '').strip()
+            sonnet_model = env_vars.get('ANTHROPIC_DEFAULT_SONNET_MODEL', '').strip()
+            haiku_model = env_vars.get('ANTHROPIC_DEFAULT_HAIKU_MODEL', '').strip()
+
+            # Define available models (matching the existing available_models list)
+            available_models = ["GLM-4.6", "GLM-4.5", "GLM-4.5-Air"]
+
+            # Update opus model dropdown if model is valid
+            if opus_model and opus_model in available_models:
+                self.zai_opus_model_var.set(opus_model)
+
+            # Update sonnet model dropdown if model is valid
+            if sonnet_model and sonnet_model in available_models:
+                self.zai_sonnet_model_var.set(sonnet_model)
+
+            # Update haiku model dropdown if model is valid
+            if haiku_model and haiku_model in available_models:
+                self.zai_haiku_model_var.set(haiku_model)
+
+            # Update the environment display to show the loaded models
+            self.update_zai_env_display()
+
+        except Exception:
+            # Silently fail if we can't load model settings
             pass
 
     def get_user_env_var(self, var_name):
@@ -1773,6 +1850,17 @@ class ClaudeConfigSwitcher:
         # Mark current selection as none since key was manually changed
         self.current_zai_key_name = None
         self.save_api_keys()
+
+    def update_zai_env_display(self):
+        """Update the environment variables display to show selected models"""
+        if hasattr(self, 'zai_env_value_labels'):
+            # Update the model values in the display
+            self.zai_env_value_labels["ANTHROPIC_DEFAULT_OPUS_MODEL"].config(
+                text=self.zai_opus_model_var.get())
+            self.zai_env_value_labels["ANTHROPIC_DEFAULT_SONNET_MODEL"].config(
+                text=self.zai_sonnet_model_var.get())
+            self.zai_env_value_labels["ANTHROPIC_DEFAULT_HAIKU_MODEL"].config(
+                text=self.zai_haiku_model_var.get())
 
     def add_zai_key(self):
         """Add a new z.ai key"""
@@ -2570,9 +2658,9 @@ class ClaudeConfigSwitcher:
                 env_vars = {
                     'ANTHROPIC_AUTH_TOKEN': zai_key,
                     'ANTHROPIC_BASE_URL': 'https://api.z.ai/api/anthropic',
-                    'ANTHROPIC_DEFAULT_OPUS_MODEL': 'GLM-4.6',
-                    'ANTHROPIC_DEFAULT_SONNET_MODEL': 'GLM-4.6',
-                    'ANTHROPIC_DEFAULT_HAIKU_MODEL': 'GLM-4.6',
+                    'ANTHROPIC_DEFAULT_OPUS_MODEL': self.zai_opus_model_var.get(),
+                    'ANTHROPIC_DEFAULT_SONNET_MODEL': self.zai_sonnet_model_var.get(),
+                    'ANTHROPIC_DEFAULT_HAIKU_MODEL': self.zai_haiku_model_var.get(),
                     'API_TIMEOUT_MS': '3000000'
                 }
 

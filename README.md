@@ -84,4 +84,8 @@ Configures any API endpoint with your custom base URL and auth token.
 
 ## License
 
+<<<<<<< HEAD
 MIT
+=======
+MIT
+>>>>>>> 5e6ef9c276569a50df0b4e39d545d3f5b96178cb

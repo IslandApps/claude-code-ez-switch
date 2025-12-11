@@ -118,9 +118,13 @@ class ClaudeConfigSwitcher:
             self.root.geometry("550x850")
             self.root.resizable(True, True)
             self.root.minsize(450, 700)
-        else:
-            # Windows: Original size and no resizing
+        elif IS_MACOS:
+            # macOS: Original size and no resizing
             self.root.geometry("600x1000")
+            self.root.resizable(False, False)
+        else:
+            # Windows: Increased height to account for taskbar and prevent footer cutoff
+            self.root.geometry("600x1100")
             self.root.resizable(False, False)
 
         # Keep native window decorations (title bar with minimize/maximize/close buttons)
@@ -2591,7 +2595,7 @@ def main():
             elif IS_MACOS:
                 height = 1000
             else:
-                height = 1000
+                height = 1100
 
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
@@ -2600,11 +2604,14 @@ def main():
         x = max(50, (screen_width // 2) - (width // 2))
         y = max(50, (screen_height // 2) - (height // 2))
 
+        # Platform-specific bottom margin to account for taskbar
+        bottom_margin = 80 if (not IS_LINUX and not IS_MACOS) else 50  # Windows gets larger margin
+
         # Ensure window doesn't go off screen
         if x + width > screen_width - 50:
             x = screen_width - width - 50
-        if y + height > screen_height - 50:
-            y = screen_height - height - 50
+        if y + height > screen_height - bottom_margin:
+            y = screen_height - height - bottom_margin
 
         root.geometry(f'{width}x{height}+{x}+{y}')
 
@@ -2612,8 +2619,10 @@ def main():
         # Set a safe fallback geometry
         if IS_LINUX:
             root.geometry("500x850+100+100")
-        else:
+        elif IS_MACOS:
             root.geometry("600x1000+100+100")
+        else:
+            root.geometry("600x1100+100+100")
 
     # Apply window styles after window is fully created and displayed
     # Use longer delay on Linux to ensure window manager has processed the window

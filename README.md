@@ -33,7 +33,7 @@ python ezswitch.py
 1. Launch the application
 2. Select **Z.ai**, **Claude Subscription**, or **Custom**
 3. Enter your API key and base URL (if applicable)
-4. For Z.ai users: Choose your preferred GLM models for each tier (Opus, Sonnet, Haiku)
+4. For Z.ai users: Choose your preferred GLM models (GLM-4.6, GLM-4.5, GLM-4.5-Air) for each tier
 5. Click **Apply Configuration**
 6. **Just restart Claude Code** - no terminal restart needed!
 

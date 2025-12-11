@@ -18,7 +18,7 @@ A simple GUI application for managing Claude Code API configurations - easily sw
 ## Installation
 
 ### Option 1: Windows Executable (Recommended)
-1. Download [`claude-code-ez-switch-v1.0.exe`](https://github.com/techcow2/claude-code-ez-switch/releases/tag/v1.0)
+1. Download the latest `.exe` from the [Releases page](https://github.com/techcow2/claude-code-ez-switch/releases)
 2. Run the executable - no installation required!
 
 ### Option 2: Python Source
@@ -84,8 +84,4 @@ Configures any API endpoint with your custom base URL and auth token.
 
 ## License
 
-<<<<<<< HEAD
 MIT
-=======
-MIT
->>>>>>> 5e6ef9c276569a50df0b4e39d545d3f5b96178cb

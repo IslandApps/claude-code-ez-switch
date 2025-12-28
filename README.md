@@ -18,10 +18,12 @@ A simple GUI application for managing Claude Code API configurations - easily sw
 ## Installation
 
 ### Option 1: Windows Executable (Recommended)
+
 1. Download the latest `.exe` from the [Releases page](https://github.com/techcow2/claude-code-ez-switch/releases)
 2. Run the executable - no installation required!
 
 ### Option 2: Python Source
+
 ```bash
 git clone https://github.com/techcow2/claude-code-ez-switch.git
 cd claude-code-ez-switch
@@ -33,11 +35,12 @@ python ezswitch.py
 1. Launch the application
 2. Select **Z.ai**, **Claude Subscription**, or **Custom**
 3. Enter your API key and base URL (if applicable)
-4. For Z.ai users: Choose your preferred GLM models (GLM-4.6, GLM-4.5, GLM-4.5-Air) for each tier
+4. For Z.ai users: Choose your preferred GLM models (GLM-4.7, GLM-4.6, GLM-4.5, GLM-4.5-Air) for each tier
 5. Click **Apply Configuration**
 6. **Just restart Claude Code** - no terminal restart needed!
 
 ### Pro Tips
+
 - Use the **"Show Claude Settings"** checkbox to see your current configuration
 - Check **"Show API Keys"** to view sensitive values in the settings display
 - Mix and match GLM models based on your needs (see guide below)
@@ -55,20 +58,23 @@ python ezswitch.py
 
 ## Model Selection Guide
 
-When using Z.ai, you can choose from three GLM models:
+When using Z.ai, you can choose from four GLM models:
 
-- **GLM-4.6**: Most capable, best for complex reasoning and coding tasks
+- **GLM-4.7**: Latest flagship model, superior performance and reasoning
+- **GLM-4.6**: High capability, best for complex reasoning and coding tasks
 - **GLM-4.5**: Balanced performance, good for everyday tasks
 - **GLM-4.5-Air**: Fastest response time, ideal for quick queries
 
-**Strategy**: Use GLM-4.6 for Opus (complex tasks), GLM-4.5 for Sonnet (general use), and GLM-4.5-Air for Haiku (quick responses).
+**Strategy**: Use GLM-4.7 or GLM-4.6 for Opus (complex tasks), GLM-4.5 for Sonnet (general use), and GLM-4.5-Air for Haiku (quick responses).
 
 ## How It Works
 
 The app only modifies `~/.claude/settings.json` - no system environment variables or shell files are touched.
 
 ### Z.ai Mode
+
 Configures:
+
 - `ANTHROPIC_AUTH_TOKEN`: Your Z.ai API key
 - `ANTHROPIC_BASE_URL`: `https://api.z.ai/api/anthropic`
 - `ANTHROPIC_DEFAULT_OPUS_MODEL`: Your selected GLM model for Opus
@@ -77,9 +83,11 @@ Configures:
 - `API_TIMEOUT_MS`: `3000000` (50-minute timeout)
 
 ### Claude Mode
+
 Clears all custom settings to use your default Claude subscription.
 
 ### Custom Mode
+
 Configures any API endpoint with your custom base URL and auth token.
 
 ## License

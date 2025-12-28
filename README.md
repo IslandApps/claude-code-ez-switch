@@ -65,8 +65,6 @@ When using Z.ai, you can choose from four GLM models:
 - **GLM-4.5**: Balanced performance, good for everyday tasks
 - **GLM-4.5-Air**: Fastest response time, ideal for quick queries
 
-**Strategy**: Use GLM-4.7 or GLM-4.6 for Opus (complex tasks), GLM-4.5 for Sonnet (general use), and GLM-4.5-Air for Haiku (quick responses).
-
 ## How It Works
 
 The app only modifies `~/.claude/settings.json` - no system environment variables or shell files are touched.

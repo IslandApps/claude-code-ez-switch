@@ -60,7 +60,7 @@ python ezswitch.py
 
 When using Z.ai, you can choose from four GLM models:
 
-- **GLM-4.7**: Latest flagship model, superior performance and reasoning
+- **GLM-4.7**: Latest flagship model, superior performance.
 - **GLM-4.6**: High capability, best for complex reasoning and coding tasks
 - **GLM-4.5**: Balanced performance, good for everyday tasks
 - **GLM-4.5-Air**: Fastest response time, ideal for quick queries

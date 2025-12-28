@@ -934,13 +934,13 @@ class ClaudeConfigSwitcher:
         model_frame.pack(fill=tk.X, padx=15, pady=(0, 10))
 
         # Define available GLM models
-        self.available_models = ["GLM-4.6", "GLM-4.5", "GLM-4.5-Air"]
+        self.available_models = ["GLM-4.7", "GLM-4.6", "GLM-4.5", "GLM-4.5-Air"]
 
         # Opus Model Selection
         opus_label = ttk.Label(model_frame, text="Opus Model:")
         opus_label.grid(row=0, column=0, sticky=tk.W, pady=(2, 5))
 
-        self.zai_opus_model_var = tk.StringVar(value="GLM-4.6")
+        self.zai_opus_model_var = tk.StringVar(value="GLM-4.7")
         self.zai_opus_combo = ttk.Combobox(model_frame, textvariable=self.zai_opus_model_var,
                                            values=self.available_models, state="readonly", width=20)
         self.zai_opus_combo.grid(row=0, column=1, sticky=tk.W, padx=(10, 0), pady=(2, 5))
@@ -949,7 +949,7 @@ class ClaudeConfigSwitcher:
         sonnet_label = ttk.Label(model_frame, text="Sonnet Model:")
         sonnet_label.grid(row=1, column=0, sticky=tk.W, pady=(2, 5))
 
-        self.zai_sonnet_model_var = tk.StringVar(value="GLM-4.6")
+        self.zai_sonnet_model_var = tk.StringVar(value="GLM-4.7")
         self.zai_sonnet_combo = ttk.Combobox(model_frame, textvariable=self.zai_sonnet_model_var,
                                              values=self.available_models, state="readonly", width=20)
         self.zai_sonnet_combo.grid(row=1, column=1, sticky=tk.W, padx=(10, 0), pady=(2, 5))
@@ -958,7 +958,7 @@ class ClaudeConfigSwitcher:
         haiku_label = ttk.Label(model_frame, text="Haiku Model:")
         haiku_label.grid(row=2, column=0, sticky=tk.W, pady=(2, 5))
 
-        self.zai_haiku_model_var = tk.StringVar(value="GLM-4.6")
+        self.zai_haiku_model_var = tk.StringVar(value="GLM-4.7")
         self.zai_haiku_combo = ttk.Combobox(model_frame, textvariable=self.zai_haiku_model_var,
                                             values=self.available_models, state="readonly", width=20)
         self.zai_haiku_combo.grid(row=2, column=1, sticky=tk.W, padx=(10, 0), pady=(2, 5))

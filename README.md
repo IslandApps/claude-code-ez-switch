@@ -6,6 +6,10 @@
 
 A simple GUI application for managing Claude Code API configurations - easily switch between Claude subscription, Z.ai API, and custom endpoints.
 
+## What's New
+
+- **v1.3**: Repaired Windows `.exe` release (previous `.exe` was not working on Windows).
+
 ## Table of Contents
 
 - [Installation](#installation)
@@ -29,7 +33,7 @@ git clone https://github.com/techcow2/claude-code-ez-switch.git
 cd claude-code-ez-switch
 chmod +x run.sh
 ./run.sh
-```
+````
 
 ## Usage
 
@@ -42,29 +46,29 @@ chmod +x run.sh
 
 ### Pro Tips
 
-- Use the **"Show Claude Settings"** checkbox to see your current configuration
-- Check **"Show API Keys"** to view sensitive values in the settings display
-- Mix and match GLM models based on your needs (see guide below)
-- Settings are applied instantly to `~/.claude/settings.json`
+* Use the **"Show Claude Settings"** checkbox to see your current configuration
+* Check **"Show API Keys"** to view sensitive values in the settings display
+* Mix and match GLM models based on your needs (see guide below)
+* Settings are applied instantly to `~/.claude/settings.json`
 
 ## Features
 
-- **Easy GUI Interface**: No command line required
-- **One-Click Switching**: Toggle between Z.ai, Claude subscription, and custom APIs
-- **Advanced Model Selection**: Choose specific GLM models for each Claude tier
-- **Secure Local Storage**: API keys saved locally in `~/.claude_ez_switch/`
-- **Real-time Status**: Visual feedback for configuration changes
-- **Cross-Platform**: Works on Windows, Linux, and macOS
-- **Settings-Only**: Modifies only Claude Code settings.json, never system environment
+* **Easy GUI Interface**: No command line required
+* **One-Click Switching**: Toggle between Z.ai, Claude subscription, and custom APIs
+* **Advanced Model Selection**: Choose specific GLM models for each Claude tier
+* **Secure Local Storage**: API keys saved locally in `~/.claude_ez_switch/`
+* **Real-time Status**: Visual feedback for configuration changes
+* **Cross-Platform**: Works on Windows, Linux, and macOS
+* **Settings-Only**: Modifies only Claude Code settings.json, never system environment
 
 ## Model Selection Guide
 
 When using Z.ai, you can choose from four GLM models:
 
-- **GLM-4.7**: Latest flagship model, superior performance.
-- **GLM-4.6**: High capability, best for complex reasoning and coding tasks
-- **GLM-4.5**: Balanced performance, good for everyday tasks
-- **GLM-4.5-Air**: Fastest response time, ideal for quick queries
+* **GLM-4.7**: Latest flagship model, superior performance.
+* **GLM-4.6**: High capability, best for complex reasoning and coding tasks
+* **GLM-4.5**: Balanced performance, good for everyday tasks
+* **GLM-4.5-Air**: Fastest response time, ideal for quick queries
 
 ## How It Works
 
@@ -74,12 +78,12 @@ The app only modifies `~/.claude/settings.json` - no system environment variable
 
 Configures:
 
-- `ANTHROPIC_AUTH_TOKEN`: Your Z.ai API key
-- `ANTHROPIC_BASE_URL`: `https://api.z.ai/api/anthropic`
-- `ANTHROPIC_DEFAULT_OPUS_MODEL`: Your selected GLM model for Opus
-- `ANTHROPIC_DEFAULT_SONNET_MODEL`: Your selected GLM model for Sonnet
-- `ANTHROPIC_DEFAULT_HAIKU_MODEL`: Your selected GLM model for Haiku
-- `API_TIMEOUT_MS`: `3000000` (50-minute timeout)
+* `ANTHROPIC_AUTH_TOKEN`: Your Z.ai API key
+* `ANTHROPIC_BASE_URL`: `https://api.z.ai/api/anthropic`
+* `ANTHROPIC_DEFAULT_OPUS_MODEL`: Your selected GLM model for Opus
+* `ANTHROPIC_DEFAULT_SONNET_MODEL`: Your selected GLM model for Sonnet
+* `ANTHROPIC_DEFAULT_HAIKU_MODEL`: Your selected GLM model for Haiku
+* `API_TIMEOUT_MS`: `3000000` (50-minute timeout)
 
 ### Claude Mode
 

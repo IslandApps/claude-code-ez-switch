@@ -27,7 +27,8 @@ A simple GUI application for managing Claude Code API configurations - easily sw
 ```bash
 git clone https://github.com/techcow2/claude-code-ez-switch.git
 cd claude-code-ez-switch
-python ezswitch.py
+chmod +x run.sh
+./run.sh
 ```
 
 ## Usage
@@ -67,7 +68,7 @@ When using Z.ai, you can choose from four GLM models:
 
 ## How It Works
 
-The app only modifies `~/.claude/settings.json` - no system environment variables or shell files are touched.
+The app only modifies `~/.claude/settings.json` - no system environment variables or shell files are touched. [github](https://github.com/techcow2/claude-code-ez-switch)
 
 ### Z.ai Mode
 
